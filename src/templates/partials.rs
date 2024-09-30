@@ -37,20 +37,17 @@ pub async fn footer() -> Markup {
     let (url, short_hash) = match raw_hash {
         Some(raw) if raw.ends_with("-dirty") && raw.len() >= 7 => {
             let url = format!(
-                "https://example.com/path/to/repo/maddie-wtf/tree/{}",
+                "https://github.com/maddiemort/maddie-wtf/tree/{}",
                 &raw[0..7]
             );
             (url, Some(raw))
         }
         Some(raw) if raw.len() >= 7 => {
-            let url = format!("https://example.com/path/to/repo/maddie-wtf/tree/{}", raw);
+            let url = format!("https://github.com/maddiemort/maddie-wtf/tree/{}", raw);
             let short_hash = &raw[0..7];
             (url, Some(short_hash))
         }
-        _ => (
-            "https://example.com/path/to/repo/maddie-wtf".to_owned(),
-            None,
-        ),
+        _ => ("https://github.com/maddiemort/maddie-wtf".to_owned(), None),
     };
 
     html! {
