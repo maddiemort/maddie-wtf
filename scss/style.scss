@@ -15,7 +15,8 @@ $onehalf-dark-bg: #282c34;
   --text-accent: #{darken($accent, 35%)};
 
   code,
-  pre {
+  pre,
+  blockquote {
     background-color: $onehalf-light-bg;
   }
 }
@@ -28,7 +29,8 @@ $onehalf-dark-bg: #282c34;
     --text-accent: #{$accent};
 
     code,
-    pre {
+    pre,
+    blockquote {
       background-color: $onehalf-dark-bg;
     }
   }
@@ -87,6 +89,20 @@ body {
 
 em {
   font-style: italic;
+}
+
+blockquote {
+  border-left: 3px solid var(--text);
+  margin: 1rem 0;
+  padding: 0.5rem 0.5rem;
+
+  *:first-child {
+    margin-top: 0;
+  }
+
+  *:last-child {
+    margin-bottom: 0;
+  }
 }
 
 h1,
