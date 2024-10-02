@@ -1,0 +1,11 @@
+# Rust
+debug/
+target/
+**/*.rs.bk
+*.pdb
+
+# Nix
+result
+result-bin
+
+**/.env

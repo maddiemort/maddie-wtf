@@ -1,0 +1,68 @@
+[package]
+name = "maddie-wtf"
+version = "0.1.0"
+edition = "2021"
+publish = false
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+axum = "0.7.4"
+axum-tracing-opentelemetry = "0.16.0"
+camino = "1.1.6"
+cfg-if = "1.0.0"
+comrak = "0.21.0"
+dotenv = "0.15.0"
+either = "1.11.0"
+ignore = "0.4.22"
+init-tracing-opentelemetry = "0.16.0"
+lazy_static = "1.4.0"
+notify = "6.1.1"
+notify-debouncer-mini = "0.4.1"
+syntect = "5.2.0"
+tap = "1.0.1"
+thiserror = "1.0.56"
+toml = "0.8.10"
+tower = "0.4.13"
+tower-livereload = "0.9.2"
+tracing = "0.1.40"
+
+[dependencies.tokio]
+version = "1.36.0"
+features = ["full"]
+
+[dependencies.tracing-subscriber]
+version = "0.3.18"
+features = ["env-filter"]
+
+[dependencies.clap]
+version = "4.5.0"
+features = ["env"]
+
+[dependencies.chrono]
+version = "0.4.34"
+features = ["serde"]
+
+[dependencies.maud]
+version = "0.26.0"
+features = ["axum"]
+
+[dependencies.serde]
+version = "1.0.196"
+features = ["derive"]
+
+[dependencies.tower-http]
+version = "0.5.1"
+features = ["fs"]
+
+[dependencies.uuid]
+version = "1.7.0"
+features = ["v4"]
+
+[build-dependencies]
+grass = "0.13.2"
+grass_compiler = "0.13.2"
+thiserror = "1.0.56"
+
+[build-dependencies.built]
+version = "0.7.2"
+features = ["git2"]

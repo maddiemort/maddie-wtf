@@ -1,0 +1,10 @@
+<svg width="50" height="50" viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
+    <style>
+        .circle { fill: #ad27c1; }
+        @media(prefers-color-scheme: dark) { .circle { fill: #d880e5; } }
+        .text { font: 36px Lora; fill: white; }
+    </style>
+    <circle cx="25" cy="25" r="25" class="circle"/>
+    <text x="49%" y="56%" dominant-baseline="middle" text-anchor="middle" class="text">?!</text>
+</svg>
+

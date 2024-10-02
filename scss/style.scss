@@ -1,0 +1,209 @@
+@import "reset";
+
+$accent: #d880e5;
+
+$onehalf-light-text: #383a42;
+$onehalf-light-bg: #fafafa;
+
+$onehalf-dark-text: #dcdfe4;
+$onehalf-dark-bg: #282c34;
+
+:root {
+  --text: #{darken($onehalf-light-text, 10%)};
+  --rule: #{lighten($onehalf-light-text, 50%)};
+  --bg: #{lighten($onehalf-light-bg, 5%)};
+  --text-accent: #{darken($accent, 35%)};
+
+  code,
+  pre {
+    background-color: $onehalf-light-bg;
+  }
+}
+
+@media(prefers-color-scheme: dark) {
+  :root {
+    --text: #{lighten($onehalf-dark-text, 10%)};
+    --rule: #{darken($onehalf-dark-text, 50%)};
+    --bg: #{darken($onehalf-dark-bg, 5%)};
+    --text-accent: #{$accent};
+
+    code,
+    pre {
+      background-color: $onehalf-dark-bg;
+    }
+  }
+}
+
+// lora-regular - latin_latin-ext_math_symbols
+@font-face {
+  // Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display
+  // for other options.
+  font-display: swap;
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400;
+  src: url('/static/lora-regular.woff2') format('woff2');
+}
+
+// lora-italic - latin_latin-ext_math_symbols
+@font-face {
+  font-display: swap;
+  font-family: 'Lora';
+  font-style: italic;
+  font-weight: 400;
+  src: url('/static/lora-italic.woff2') format('woff2');
+}
+
+// lora-600 - latin_latin-ext_math_symbols
+@font-face {
+  font-display: swap;
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 600;
+  src: url('/static/lora-600.woff2') format('woff2');
+}
+
+// iosevka-regular
+@font-face {
+  font-display: swap;
+  font-family: 'Iosevka';
+  font-style: normal;
+  font-weight: 400;
+  src: url('/static/iosevka-regular.woff2') format('woff2');
+}
+
+body {
+  max-width: 48rem;
+  margin: 1rem auto;
+  padding: 0 1rem;
+  font-size: 100%;
+  line-height: 1.4;
+
+  color: var(--text);
+  background-color: var(--bg);
+
+  font-family: 'Lora', serif;
+}
+
+em {
+  font-style: italic;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+ul,
+ol,
+pre {
+  margin: 1rem 0;
+}
+
+a {
+  color: var(--text-accent);
+}
+
+a {
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-weight: 600;
+}
+
+h1 { font-size: 2rem; }
+h2 { font-size: 1.75rem; }
+h3 { font-size: 1.5rem; }
+h4 { font-size: 1.35rem; }
+h5 { font-size: 1.2rem; }
+h6 { font-size: 1.1rem; }
+
+code {
+  font-family: 'Iosevka', monospace;
+  font-weight: 400;
+  font-size: 95%;
+  padding: 0rem 0.25rem;
+  border-radius: 3px;
+}
+
+pre {
+  padding: 0.5rem;
+  overflow-x: scroll;
+
+  code {
+    padding: 0;
+  }
+}
+
+p {
+  text-align: justify;
+  word-wrap: break-word;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  p {
+    text-align: start;
+  }
+}
+
+hr {
+  border: none;
+  height: 1px;
+  color: var(--rule);
+  background-color: var(--rule);
+}
+
+h1.sitetitle {
+  font-size: 2.35rem;
+}
+
+header.siteheader,
+ul.frontmatter {
+  display: flex;
+
+  li {
+    display: inline;
+  }
+
+  li+li::before {
+    margin: 0 0.25rem;
+    content: '*';
+  }
+}
+
+header.siteheader {
+  align-items: center;
+  justify-content: space-between;
+  text-align: center;
+}
+
+footer.sitefooter {
+  border-top: 1px solid var(--rule);
+
+  ul {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.5rem;
+    
+    li {
+      display: inline;
+    }
+  }
+}
