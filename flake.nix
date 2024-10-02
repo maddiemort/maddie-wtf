@@ -179,7 +179,7 @@
           (pkgs.rustBuilder.rustLib.makeOverride {
             name = "maddie-wtf";
             overrideAttrs = drv: {
-              # COMMIT_HASH = self.rev or self.dirtyShortRev;
+              COMMIT_HASH = self.rev or self.dirtyShortRev;
             };
           })
         ];
