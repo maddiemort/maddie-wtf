@@ -219,11 +219,13 @@
 
       devShells.default = pkgs.mkShell {
         packages = with pkgs; [
+          rust-toolchain
+
+          cargo-dist
           cargo2nix
           convco
-          nixpkgs-fmt
-          rust-toolchain
           lld
+          nixpkgs-fmt
 
           libiconv
         ] ++ (optionals pkgs.stdenv.isDarwin (with pkgs.darwin.apple_sdk.frameworks; [
