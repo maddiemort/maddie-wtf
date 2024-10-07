@@ -9,7 +9,7 @@ use comrak::{
     markdown_to_html_with_plugins, plugins::syntect::SyntectAdapter, ComrakOptions, ComrakPlugins,
 };
 use either::Either;
-use ignore::Walk;
+use ignore::{Walk, WalkBuilder};
 use lazy_static::lazy_static;
 use maud::{html, Markup, PreEscaped};
 use notify::{RecommendedWatcher, RecursiveMode};
@@ -124,6 +124,7 @@ impl Config {
 
         let runtime = runtime::Handle::current();
         let content_1 = content.clone();
+        let content_path_1 = self.content_path.clone();
 
         let loader_handle = runtime.spawn_blocking(move || {
             let _guard = span!(Level::ERROR, "content_loader").entered();
@@ -138,6 +139,25 @@ impl Config {
                             );
                             return;
                         };
+
+                        let Ok(relative) = path.strip_prefix(&content_path_1) else {
+                            debug!(
+                                %path,
+                                "skipping entry for path that isn't relative to the content path"
+                            );
+                            return;
+                        };
+
+                        if relative
+                            .components()
+                            .any(|component| component.as_str().starts_with('.'))
+                        {
+                            debug!(
+                                %path,
+                                "skipping entry for a path containing a hidden file or directory"
+                            );
+                            return;
+                        }
 
                         if path
                             .file_name()
