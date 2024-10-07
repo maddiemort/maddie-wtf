@@ -14,6 +14,14 @@ A few slightly cool things it does:
 - Commit info is gathered at build time so that the footer on every page can link back to the exact
   version that's being served.
 
+This isn't really designed for anyone else to be able to come along and just _run_. That being said,
+the licenses allow re-use, and feel free to take inspiration from anything I've done here. I am not
+ever going to convert this project into a more general static site generator.
+
+The real content is hosted in a separate private repo so I can write blog posts and commit them
+before they're finished without them being accessible to the whole world. There's example content in
+this repo, in `/example-content`, if you want to run this locally.
+
 ## Development
 
 ### Set up Rust toolchain
