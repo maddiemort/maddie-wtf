@@ -3,4 +3,5 @@ channel = "1.80.1"
 components = [
     "rust-src",
     "rust-std",
+    "rust-analyzer",
 ]
