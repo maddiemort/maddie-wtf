@@ -1,0 +1,36 @@
+---
+types:
+- type: feat
+  section: Features
+  hidden: false
+- type: fix
+  section: Fixes
+  hidden: false
+- type: build
+  section: Other
+  hidden: true
+- type: chore
+  section: Other
+  hidden: true
+- type: ci
+  section: Other
+  hidden: true
+- type: docs
+  section: Documentation
+  hidden: true
+- type: style
+  section: Other
+  hidden: true
+- type: release
+  section: Other
+  hidden: true
+- type: refactor
+  section: Other
+  hidden: true
+- type: perf
+  section: Other
+  hidden: true
+- type: test
+  section: Other
+  hidden: true
+releaseCommitMessageFormat: 'release: {{currentTag}}'
