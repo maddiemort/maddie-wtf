@@ -12,6 +12,7 @@ use crate::state::{
 
 pub struct PostRef<'a> {
     pub(super) guard: RwLockReadGuard<'a, Post>,
+    pub(super) show_drafts: bool,
 }
 
 impl<'a> Render for PostRef<'a> {
@@ -41,35 +42,45 @@ impl<'a> Render for PostRef<'a> {
                 metadata: _,
                 html_summary: _,
                 entries,
-            } => html! {
-                article {
-                    (PreEscaped(post.html_title(1)))
-                    @for (i, entry) in entries.iter().enumerate() {
-                        @if i > 0 {
-                            hr;
-                        }
-                        ul class="frontmatter" {
-                            li {
-                                time datetime=(entry.metadata.date) {
-                                    (entry.metadata.date.format("%e %B %Y"))
-                                }
+            } => {
+                let mut filtered_entries = vec![];
+                let mut found_draft = false;
+
+                for entry in entries {
+                    found_draft |= entry.metadata.draft;
+                    if self.show_drafts || !found_draft {
+                        filtered_entries.push(entry);
+                    }
+                }
+
+                html! {
+                    article {
+                        (PreEscaped(post.html_title(1)))
+                        @for (i, entry) in filtered_entries.iter().enumerate() {
+                            @if i > 0 {
+                                hr;
                             }
-                            @if i == 0 {
-                                @for tag in post.tags() {
-                                    li {
-                                        a href=(format!("/tagged/{}", tag)) {
-                                            (tag)
+                            ul class="frontmatter" {
+                                li {
+                                    time datetime=(entry.metadata.date) {
+                                        (entry.metadata.date.format("%e %B %Y"))
+                                    }
+                                }
+                                @if i == 0 {
+                                    @for tag in post.tags() {
+                                        li {
+                                            a href=(format!("/tagged/{}", tag)) {
+                                                (tag)
+                                            }
                                         }
                                     }
                                 }
                             }
-                        }
-                        p {
                             (PreEscaped(&entry.html_content))
                         }
                     }
                 }
-            },
+            }
         }
     }
 }
@@ -106,20 +117,28 @@ impl Deref for PageRef<'_> {
 
 pub struct NodesRef<'a> {
     pub(super) guard: RwLockReadGuard<'a, HashMap<Utf8PathBuf, Node>>,
+    pub(super) show_drafts: bool,
 }
 
 impl<'a> NodesRef<'a> {
     pub fn into_posts(self) -> PostsRef<'a> {
-        PostsRef { guard: self.guard }
+        PostsRef {
+            guard: self.guard,
+            show_drafts: self.show_drafts,
+        }
     }
 
     pub fn into_chrono(self) -> ChronoRef<'a> {
-        ChronoRef { guard: self.guard }
+        ChronoRef {
+            guard: self.guard,
+            show_drafts: self.show_drafts,
+        }
     }
 }
 
 pub struct PostsRef<'a> {
     pub(super) guard: RwLockReadGuard<'a, HashMap<Utf8PathBuf, Node>>,
+    pub(super) show_drafts: bool,
 }
 
 impl Render for PostsRef<'_> {
@@ -132,6 +151,29 @@ impl Render for PostsRef<'_> {
                     Some((path.as_path(), post))
                 } else {
                     None
+                }
+            })
+            .filter(|(_, post)| {
+                if !self.show_drafts {
+                    // If we're not showing drafts, then filter out the following things:
+                    //
+                    // - Posts that are only a single entry that's a draft
+                    // - Posts that are a thread where we can't display any of the entries (i.e. the
+                    //   first entry is a draft, which implies the following are also drafts)
+                    let is_draft = match post {
+                        Post::Single { metadata, .. } => metadata.draft,
+                        Post::Thread { entries, .. } => {
+                            entries
+                                .first()
+                                .expect("a post cannot have no entries")
+                                .metadata
+                                .draft
+                        }
+                    };
+
+                    !is_draft
+                } else {
+                    true
                 }
             })
             .collect::<Vec<_>>();
@@ -170,11 +212,11 @@ impl Render for PostsRef<'_> {
                                         (post.date_posted().format("%e %B %Y"))
                                     }
                                 }
-                                @if post.date_posted() != post.date_updated() {
+                                @if post.date_posted() != post.date_updated(self.show_drafts) {
                                     li {
                                         "updated "
-                                        time datetime=(post.date_updated()) {
-                                            (post.date_updated().format("%e %B %Y"))
+                                        time datetime=(post.date_updated(self.show_drafts)) {
+                                            (post.date_updated(self.show_drafts).format("%e %B %Y"))
                                         }
                                     }
                                 }
@@ -197,6 +239,7 @@ impl Render for PostsRef<'_> {
 
 pub struct ChronoRef<'a> {
     pub(super) guard: RwLockReadGuard<'a, HashMap<Utf8PathBuf, Node>>,
+    pub(super) show_drafts: bool,
 }
 
 enum ChronoEntry<'a> {
@@ -254,28 +297,42 @@ impl Render for ChronoRef<'_> {
         let nodes = self.guard.deref();
         let mut entries = nodes
             .iter()
-            .flat_map(|(path, node)| match node {
-                Node::Post(Post::Single {
-                    metadata,
-                    html_summary,
-                    ..
-                }) => vec![ChronoEntry::Single {
-                    path,
-                    metadata,
-                    html_summary: html_summary.as_str(),
-                }],
-                Node::Post(Post::Thread {
-                    metadata, entries, ..
-                }) => entries
-                    .iter()
-                    .map(|entry| ChronoEntry::ThreadEntry {
-                        path,
-                        thread_meta: metadata,
-                        entry_meta: &entry.metadata,
-                        html_summary: entry.html_summary.as_str(),
-                    })
-                    .collect(),
-                _ => vec![],
+            .flat_map(|(path, node)| {
+                let mut to_render = vec![];
+                match node {
+                    Node::Post(Post::Single {
+                        metadata,
+                        html_summary,
+                        ..
+                    }) => {
+                        if self.show_drafts || !metadata.draft {
+                            to_render.push(ChronoEntry::Single {
+                                path,
+                                metadata,
+                                html_summary: html_summary.as_str(),
+                            });
+                        }
+                    }
+                    Node::Post(Post::Thread {
+                        metadata, entries, ..
+                    }) => {
+                        let mut found_draft = false;
+                        for entry in entries {
+                            found_draft |= entry.metadata.draft;
+
+                            if self.show_drafts || !found_draft {
+                                to_render.push(ChronoEntry::ThreadEntry {
+                                    path,
+                                    thread_meta: metadata,
+                                    entry_meta: &entry.metadata,
+                                    html_summary: entry.html_summary.as_str(),
+                                });
+                            }
+                        }
+                    }
+                    _ => {}
+                }
+                to_render
             })
             .collect::<Vec<ChronoEntry>>();
         entries.sort_by_key(|chrono_entry| chrono_entry.date_updated());

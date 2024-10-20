@@ -9,7 +9,7 @@ use comrak::{
     markdown_to_html_with_plugins, plugins::syntect::SyntectAdapter, ComrakOptions, ComrakPlugins,
 };
 use either::Either;
-use ignore::{Walk, WalkBuilder};
+use ignore::Walk;
 use lazy_static::lazy_static;
 use maud::{html, Markup, PreEscaped};
 use notify::{RecommendedWatcher, RecursiveMode};
@@ -231,9 +231,14 @@ impl Config {
             .watch(self.content_path.as_std_path(), RecursiveMode::Recursive)
             .map_err(WatchPath)?;
 
+        let settings = Settings {
+            show_drafts: self.drafts,
+        };
+
         Ok(State {
             content,
             theme,
+            settings,
             _watcher: Arc::new(watcher),
             _loader_handle: Arc::new(loader_handle),
         })
@@ -259,6 +264,7 @@ pub enum LoadStateError {
 pub struct State {
     pub content: Content,
     pub theme: Theme,
+    pub settings: Settings,
     _watcher: Arc<Debouncer<RecommendedWatcher>>,
     _loader_handle: Arc<JoinHandle<()>>,
 }
@@ -489,7 +495,7 @@ impl Content {
         Ok(page)
     }
 
-    pub async fn post<P>(&self, path: P) -> Option<PostRef<'_>>
+    pub async fn post<P>(&self, path: P, show_drafts: bool) -> Option<PostRef<'_>>
     where
         P: AsRef<Utf8Path>,
     {
@@ -497,7 +503,11 @@ impl Content {
         let post_guard = RwLockReadGuard::try_map(nodes_guard, |nodes| {
             nodes.get(path.as_ref()).and_then(|node| {
                 if let Node::Post(post) = node {
-                    Some(post)
+                    if show_drafts || !post.is_entirely_draft() {
+                        Some(post)
+                    } else {
+                        None
+                    }
                 } else {
                     None
                 }
@@ -505,7 +515,10 @@ impl Content {
         });
 
         if let Ok(post_guard) = post_guard {
-            Some(PostRef { guard: post_guard })
+            Some(PostRef {
+                guard: post_guard,
+                show_drafts,
+            })
         } else {
             None
         }
@@ -533,9 +546,12 @@ impl Content {
         }
     }
 
-    pub async fn nodes(&self) -> NodesRef<'_> {
+    pub async fn nodes(&self, show_drafts: bool) -> NodesRef<'_> {
         let nodes_guard = self.nodes.read().await;
-        NodesRef { guard: nodes_guard }
+        NodesRef {
+            guard: nodes_guard,
+            show_drafts,
+        }
     }
 }
 
@@ -614,15 +630,44 @@ impl Post {
         }
     }
 
-    pub fn date_updated(&self) -> NaiveDate {
+    pub fn date_updated(&self, include_draft_entries: bool) -> NaiveDate {
         match self {
             Post::Single { metadata, .. } => metadata.date,
             Post::Thread { entries, .. } => {
-                entries
-                    .last()
-                    .expect("a post cannot have no entries")
-                    .metadata
-                    .date
+                // If we're not including draft entries, then return the date of the last entry
+                // before the first one marked as a draft.
+                //
+                // If all entries are drafts (or the first entry is a draft, which is treated as
+                // equivalent), return the date of the first entry because hopefully the caller
+                // won't be displaying this at all if they know they're not supposed to display
+                // drafts.
+                let entry_for_date = if include_draft_entries {
+                    entries.first().expect("a post cannot have no entries")
+                } else {
+                    entries
+                        .iter()
+                        .fold(
+                            (
+                                false,
+                                entries.first().expect("a post cannot have no entries"),
+                            ),
+                            |(found_draft, acc), next| {
+                                let found_draft = found_draft || next.metadata.draft;
+
+                                // If we still haven't found a draft anywhere, that means *this* one
+                                // isn't a draft, so return it as the latest
+                                // non-draft entry.
+                                if !found_draft {
+                                    (found_draft, next)
+                                } else {
+                                    (found_draft, acc)
+                                }
+                            },
+                        )
+                        .1
+                };
+
+                entry_for_date.metadata.date
             }
         }
     }
@@ -631,6 +676,13 @@ impl Post {
         match self {
             Post::Single { metadata, .. } => metadata.tags.iter(),
             Post::Thread { metadata, .. } => metadata.tags.iter(),
+        }
+    }
+
+    pub fn is_entirely_draft(&self) -> bool {
+        match self {
+            Post::Single { metadata, .. } => metadata.draft,
+            Post::Thread { entries, .. } => entries.iter().all(|entry| entry.metadata.draft),
         }
     }
 }
@@ -792,5 +844,22 @@ impl Theme {
 impl FromRef<State> for Theme {
     fn from_ref(input: &State) -> Self {
         input.theme.clone()
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct Settings {
+    show_drafts: bool,
+}
+
+impl Settings {
+    pub fn show_drafts(&self) -> bool {
+        self.show_drafts
+    }
+}
+
+impl FromRef<State> for Settings {
+    fn from_ref(input: &State) -> Self {
+        input.settings.clone()
     }
 }

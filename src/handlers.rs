@@ -8,7 +8,7 @@ use tracing::{debug, warn};
 
 use crate::{
     errors::HandlerError,
-    state::{Content, Theme},
+    state::{Content, Settings, Theme},
     templates::pages,
 };
 
@@ -31,23 +31,25 @@ pub async fn index(
 pub async fn posts(
     State(content): State<Content>,
     State(theme): State<Theme>,
+    State(settings): State<Settings>,
     request: Request<Body>,
 ) -> Result<Markup, HandlerError> {
     debug!(route = %request.uri(), "handling request");
 
-    let posts = content.nodes().await.into_posts();
+    let posts = content.nodes(settings.show_drafts()).await.into_posts();
     Ok(pages::posts(posts, theme).await)
 }
 
 pub async fn post(
     State(content): State<Content>,
     State(theme): State<Theme>,
+    State(settings): State<Settings>,
     Path(post): Path<String>,
     request: Request<Body>,
 ) -> Result<Markup, HandlerError> {
     debug!(route = %request.uri(), "handling request");
 
-    if let Some(post) = content.post(post).await {
+    if let Some(post) = content.post(post, settings.show_drafts()).await {
         Ok(pages::post(post, theme).await)
     } else {
         Err(not_found(request).await)
@@ -57,11 +59,12 @@ pub async fn post(
 pub async fn chrono(
     State(content): State<Content>,
     State(theme): State<Theme>,
+    State(settings): State<Settings>,
     request: Request<Body>,
 ) -> Result<Markup, HandlerError> {
     debug!(route = %request.uri(), "handling request");
 
-    let posts = content.nodes().await.into_chrono();
+    let posts = content.nodes(settings.show_drafts()).await.into_chrono();
     Ok(pages::chrono(posts, theme).await)
 }
 
