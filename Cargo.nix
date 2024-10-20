@@ -24,7 +24,7 @@ args@{ release ? true
 ,
 }:
 let
-  nixifiedLockHash = "f4ef0a5694dcfa5d6319f48b79e0002c52e70ca17146277ec2b618e921c62fc1";
+  nixifiedLockHash = "f6b08b35ca2d51e956a0e699a1673a00a27a9d7daefd66b0822a920b6970f8a6";
   workspaceSrc = if args.workspaceSrc == null then ./. else args.workspaceSrc;
   currentLockHash = builtins.hashFile "sha256" (workspaceSrc + /Cargo.lock);
   lockHashIgnored =
@@ -51,7 +51,7 @@ else
   {
     cargo2nixVersion = "0.11.0";
     workspace = {
-      maddie-wtf = rustPackages.unknown.maddie-wtf."0.1.0";
+      maddie-wtf = rustPackages.unknown.maddie-wtf."0.1.1";
     };
     "registry+https://github.com/rust-lang/crates.io-index".addr2line."0.22.0" = overridableMkRustCrate (profileName: rec {
       name = "addr2line";
@@ -1612,9 +1612,9 @@ else
       ];
     });
 
-    "unknown".maddie-wtf."0.1.0" = overridableMkRustCrate (profileName: rec {
+    "unknown".maddie-wtf."0.1.1" = overridableMkRustCrate (profileName: rec {
       name = "maddie-wtf";
-      version = "0.1.0";
+      version = "0.1.1";
       registry = "unknown";
       src = fetchCrateLocal workspaceSrc;
       dependencies = {
