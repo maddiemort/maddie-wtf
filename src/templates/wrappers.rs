@@ -23,7 +23,7 @@ pub async fn base(title: Option<&str>, theme: Theme, content: Markup) -> Markup 
                         ul {
                             li { a href="/posts" { "posts" } }
                             li { a href="/chrono" { "chrono" } }
-                            li { a href="/tags" { "tags" } }
+                            // li { a href="/tags" { "tags" } }
                         }
                     }
                 }

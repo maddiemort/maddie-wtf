@@ -29,9 +29,9 @@ impl<'a> Render for PostRef<'a> {
                         li { (metadata.date) }
                         @for tag in post.tags() {
                             li {
-                                a href=(format!("/tagged/{}", tag)) {
+                                // a href=(format!("/tagged/{}", tag)) {
                                     (tag)
-                                }
+                                // }
                             }
                         }
                     }
@@ -69,9 +69,9 @@ impl<'a> Render for PostRef<'a> {
                                 @if i == 0 {
                                     @for tag in post.tags() {
                                         li {
-                                            a href=(format!("/tagged/{}", tag)) {
+                                            // a href=(format!("/tagged/{}", tag)) {
                                                 (tag)
-                                            }
+                                            // }
                                         }
                                     }
                                 }
@@ -222,9 +222,9 @@ impl Render for PostsRef<'_> {
                                 }
                                 @for tag in post.tags() {
                                     li {
-                                        a href=(format!("/tagged/{}", tag)) {
+                                        // a href=(format!("/tagged/{}", tag)) {
                                             (tag)
-                                        }
+                                        // }
                                     }
                                 }
                             }
@@ -370,9 +370,9 @@ impl Render for ChronoRef<'_> {
                                 }
                                 @for tag in entry.tags() {
                                     li {
-                                        a href=(format!("/tagged/{}", tag)) {
+                                        // a href=(format!("/tagged/{}", tag)) {
                                             (tag)
-                                        }
+                                        // }
                                     }
                                 }
                             }
