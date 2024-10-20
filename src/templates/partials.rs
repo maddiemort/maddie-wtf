@@ -12,20 +12,15 @@ pub async fn head(title: Option<&str>, theme: Theme) -> Markup {
             meta charset="utf-8";
             meta name="viewport" content="width=device-width,initial-scale=1,height=device-height";
 
+            link rel="icon" href="/static/favicon.svg" type="image/svg+xml";
+
+            link rel="stylesheet" href="/style.css" type="text/css";
+
             link rel="preload" href="/static/iosevka-regular.woff2" as="font" type="font/woff2" crossorigin;
-
-            link rel="preload" href="/static/lora-regular.woff2" as="font" type="font/woff2" crossorigin;
-            link rel="preload" href="/static/lora-italic.woff2" as="font" type="font/woff2" crossorigin;
-            link rel="preload" href="/static/lora-600.woff2" as="font" type="font/woff2" crossorigin;
-
             link rel="preload" href="/static/IBMPlexSans-Italic.woff2" as="font" type="font/woff2" crossorigin;
             link rel="preload" href="/static/IBMPlexSans-Regular.woff2" as="font" type="font/woff2" crossorigin;
             link rel="preload" href="/static/IBMPlexSans-SemiBold.woff2" as="font" type="font/woff2" crossorigin;
             link rel="preload" href="/static/IBMPlexSans-SemiBoldItalic.woff2" as="font" type="font/woff2" crossorigin;
-
-            link rel="icon" href="/static/favicon.svg" type="image/svg+xml";
-
-            link rel="stylesheet" href="/style.css" type="text/css";
 
             title {
                 (title.map_or("maddie, wtf?!".into(), |title| format!("{} | maddie, wtf?!", title)))
