@@ -12,14 +12,14 @@ pub async fn base(title: Option<&str>, theme: Theme, content: Markup) -> Markup 
                     "let FF_FOUC_FIX;"
                 }
 
-                header class="siteheader" {
+                header class="siteheader" role="banner" {
                     h1 class="sitetitle" {
                         a href="/" {
                             "maddie, wtf?!"
                         }
                     }
 
-                    nav {
+                    nav role="navigation" {
                         ul {
                             li { a href="/posts" { "posts" } }
                             li { a href="/chrono" { "chrono" } }
