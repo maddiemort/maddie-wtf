@@ -182,7 +182,7 @@ impl Render for PostsRef<'_> {
         html! {
             main {
                 hgroup {
-                    h1 { "posts" }
+                    h1 { "Posts" }
                     p {
                         (PreEscaped(&markdown_to_html(
                             "This is a list of posts in reverse chronological order by their \
@@ -340,7 +340,7 @@ impl Render for ChronoRef<'_> {
         html! {
             main {
                 hgroup {
-                    h1 { "chrono" }
+                    h1 { "Chrono" }
                     p {
                         (PreEscaped(&markdown_to_html(
                             "This is a list of all updates made to posts in reverse chronological \
