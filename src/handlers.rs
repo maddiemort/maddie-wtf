@@ -56,6 +56,17 @@ pub async fn post(
     }
 }
 
+pub async fn read(
+    State(content): State<Content>,
+    State(theme): State<Theme>,
+    request: Request<Body>,
+) -> Result<Markup, HandlerError> {
+    debug!(route = %request.uri(), "handling request");
+
+    let books = content.nodes(false).await.into_books();
+    Ok(pages::books(books, theme).await)
+}
+
 pub async fn chrono(
     State(content): State<Content>,
     State(theme): State<Theme>,

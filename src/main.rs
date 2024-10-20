@@ -65,7 +65,8 @@ async fn main() {
         .route("/posts", get(handlers::posts))
         .route("/posts/:post", get(handlers::post))
         .route("/chrono", get(handlers::chrono))
-        .route("/style.css", get(handlers::stylesheet));
+        .route("/style.css", get(handlers::stylesheet))
+        .route("/read", get(handlers::read));
 
     let app = app.nest_service(
         "/static",

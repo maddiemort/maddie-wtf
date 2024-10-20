@@ -134,6 +134,10 @@ impl<'a> NodesRef<'a> {
             show_drafts: self.show_drafts,
         }
     }
+
+    pub fn into_books(self) -> BooksRef<'a> {
+        BooksRef { guard: self.guard }
+    }
 }
 
 pub struct PostsRef<'a> {
@@ -378,6 +382,90 @@ impl Render for ChronoRef<'_> {
                             }
                         }
                         (PreEscaped(entry.summary()))
+                    }
+                }
+            }
+        }
+    }
+}
+
+pub struct BooksRef<'a> {
+    pub(super) guard: RwLockReadGuard<'a, HashMap<Utf8PathBuf, Node>>,
+}
+
+impl Render for BooksRef<'_> {
+    fn render(&self) -> Markup {
+        let nodes = self.guard.deref();
+        let mut books = nodes
+            .iter()
+            .filter_map(|(path, node)| {
+                if let Node::Book(book) = node {
+                    Some((path.as_path(), book))
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<_>>();
+        books.sort_by_key(|(_, book)| &book.metadata);
+
+        html! {
+            main {
+                hgroup {
+                    h1 { "Books I've Read" }
+                    p {
+                        (PreEscaped(&markdown_to_html(
+                            "This is a list of books I both remember having read and have a strong
+                            enough opinion about that I chose to write about them here. I don't plan
+                            to write much at all about each book, just enough to provide the
+                            information I'd be interested in if I were reading the same list on
+                            someone else's site."
+                        )))
+                    }
+                    p {
+                        (PreEscaped(&markdown_to_html(
+                            "I also won't typically mention books other than the first in a series;
+                            I figure if anyone _is_ interested in this page, they'll be most likely
+                            to start a series at the beginning rather than halfway through!"
+                        )))
+                    }
+                }
+
+                @for (_path, book) in books.iter().rev() {
+                    hr;
+
+                    section {
+                        hgroup {
+                            h2 {
+                                @if let Some(isbn) = book.metadata.isbn.as_ref() {
+                                    a href=(
+                                        format!(
+                                            "https://books.google.com/books?vid=ISBN{}",
+                                            isbn
+                                        )
+                                    ) {
+                                        (book.metadata.title)
+                                    }
+                                } @else {
+                                    (book.metadata.title)
+                                }
+                            }
+                            ul class="frontmatter" {
+                                li {
+                                    (book.metadata.author)
+                                }
+                                li {
+                                    time datetime=(book.metadata.date) {
+                                        (book.metadata.date.format("%e %B %Y"))
+                                    }
+                                }
+                                @if let Some(genre) = book.metadata.genre.as_ref() {
+                                    li {
+                                        (genre)
+                                    }
+                                }
+                            }
+                        }
+                        (PreEscaped(&book.html_content))
                     }
                 }
             }

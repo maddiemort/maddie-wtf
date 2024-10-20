@@ -1,5 +1,6 @@
 use std::{
-    collections::HashMap, fs::Metadata, io, path::StripPrefixError, sync::Arc, time::Duration,
+    cmp::Ordering, collections::HashMap, fs::Metadata, io, path::StripPrefixError, sync::Arc,
+    time::Duration,
 };
 
 use axum::extract::FromRef;
@@ -320,6 +321,15 @@ impl Content {
                         }
                         Err(error) => Err(error.into()),
                     }
+                } else if relative_path.components().next().map(|c| c.as_str()) == Some("read") {
+                    debug!(%relative_path, "loading book from file");
+                    match self.load_book(&relative_path).await {
+                        Ok(book) => {
+                            nodes_guard.insert(relative_path.with_extension(""), Node::Book(book));
+                            Ok(())
+                        }
+                        Err(error) => Err(error.into()),
+                    }
                 } else {
                     debug!(%relative_path, "loading page from file");
                     match self.load_page(&relative_path).await {
@@ -495,6 +505,31 @@ impl Content {
         Ok(page)
     }
 
+    async fn load_book(&self, relative_path: &Utf8Path) -> Result<Book, LoadBookError> {
+        use LoadBookError::*;
+
+        let raw_content = fs::read_to_string(self.root.join(relative_path))
+            .await
+            .map_err(ReadContent)?;
+
+        let (frontmatter, raw_content) = raw_content
+            .strip_prefix("---")
+            .ok_or(MissingFrontmatter)?
+            .split_once("---")
+            .ok_or(MalformedFrontmatter)?;
+
+        let metadata = toml::from_str::<BookMetadata>(frontmatter.trim())?;
+        let html_content = markdown_to_html(raw_content);
+
+        let book = Book {
+            metadata,
+            html_content,
+        };
+
+        info!(%relative_path, "loaded book");
+        Ok(book)
+    }
+
     pub async fn post<P>(&self, path: P, show_drafts: bool) -> Option<PostRef<'_>>
     where
         P: AsRef<Utf8Path>,
@@ -577,12 +612,16 @@ pub enum LoadContentError {
 
     #[error(transparent)]
     LoadPage(#[from] LoadPageError),
+
+    #[error(transparent)]
+    LoadBook(#[from] LoadBookError),
 }
 
 #[derive(Clone, Debug)]
 pub enum Node {
     Post(Post),
     Page(Page),
+    Book(Book),
 }
 
 #[derive(Clone, Debug)]
@@ -781,6 +820,61 @@ pub enum LoadPageError {
     MalformedFrontmatter,
 
     #[error("failed to parse page frontmatter: {0}")]
+    ParseFrontmatter(#[from] toml::de::Error),
+}
+
+#[derive(Clone, Debug)]
+pub struct Book {
+    pub metadata: BookMetadata,
+    pub html_content: String,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct BookMetadata {
+    pub title: String,
+    pub author: String,
+    pub date: NaiveDate,
+    pub isbn: Option<String>,
+    pub genre: Option<String>,
+}
+
+impl PartialEq for BookMetadata {
+    fn eq(&self, other: &Self) -> bool {
+        self.date == other.date && self.author == other.author && self.title == other.title
+    }
+}
+
+impl Eq for BookMetadata {}
+
+impl PartialOrd for BookMetadata {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for BookMetadata {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.date
+            .partial_cmp(&other.date)
+            .unwrap_or(Ordering::Equal)
+            .then(self.author.cmp(&other.author))
+            .then(self.title.cmp(&other.title))
+    }
+}
+
+#[derive(Error, Debug)]
+pub enum LoadBookError {
+    #[error("failed to read content: {0}")]
+    ReadContent(#[source] io::Error),
+
+    #[error("book entry does not begin with frontmatter")]
+    MissingFrontmatter,
+
+    #[error("book frontmatter is malformed")]
+    MalformedFrontmatter,
+
+    #[error("failed to parse book frontmatter: {0}")]
     ParseFrontmatter(#[from] toml::de::Error),
 }
 
