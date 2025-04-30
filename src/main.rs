@@ -42,7 +42,7 @@ async fn main() {
 
     let args = Args::parse();
 
-    info!(addr = %args.address, "starting server");
+    info!(addr = %args.address, "starting TCP server");
 
     let listener = match TcpListener::bind(&args.address).await {
         Ok(listener) => {
@@ -56,6 +56,14 @@ async fn main() {
     };
 
     let config = Config::from(args);
+
+    info!(
+        %config.drafts,
+        %config.content_path,
+        %config.static_path,
+        %config.themes_path,
+        "loaded config",
+    );
 
     let live_reload = LiveReloadLayer::new();
     let reloader = live_reload.reloader();

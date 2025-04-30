@@ -27,7 +27,7 @@ use tokio::{
     task::JoinHandle,
 };
 use tower_livereload::Reloader;
-use tracing::{debug, error, info, span, warn, Instrument, Level};
+use tracing::{debug, error, info, instrument, span, warn, Level};
 
 use crate::{
     state::{
@@ -130,78 +130,75 @@ impl Config {
             let _guard = span!(Level::ERROR, "content_loader").entered();
             let runtime = runtime::Handle::current();
             while let Ok(event) = event_rx.recv() {
-                runtime.block_on(
-                    async {
-                        let Ok(path) = Utf8PathBuf::from_path_buf(event.path.clone()) else {
+                runtime.block_on(async {
+                    let Ok(path) = Utf8PathBuf::from_path_buf(event.path.clone()) else {
+                        warn!(
+                            path = ?event.path,
+                            "skipping event with path that contains invalid UTF-8"
+                        );
+                        return;
+                    };
+
+                    let Ok(relative) = path.strip_prefix(&content_path_1) else {
+                        debug!(
+                            %path,
+                            "skipping entry for path that isn't relative to the content path"
+                        );
+                        return;
+                    };
+
+                    if relative
+                        .components()
+                        .any(|component| component.as_str().starts_with('.'))
+                    {
+                        debug!(
+                            %path,
+                            "skipping entry for a path containing a hidden file or directory"
+                        );
+                        return;
+                    }
+
+                    if path
+                        .file_name()
+                        .map_or(false, |name| name == "4913" || name.ends_with('~'))
+                    {
+                        // nvim creates these when you write files. I think the ~ one is
+                        // intentional, but the 4913 thing seems to be a longstanding bug:
+                        //
+                        // https://github.com/neovim/neovim/issues/3460
+                        debug!(
+                            %path,
+                            "skipping entry that appears to be an editor temporary file"
+                        );
+                        return;
+                    }
+
+                    if !fs::try_exists(&path).await.unwrap_or_default() {
+                        warn!(%path, "event probably represents a deleted file");
+                        // TODO: handle deletions
+                    } else {
+                        let Ok(metadata) = fs::metadata(&path).await else {
                             warn!(
-                                path = ?event.path,
-                                "skipping event with path that contains invalid UTF-8"
+                                %path,
+                                "skipping entry because metadata could not be accessed"
                             );
                             return;
                         };
 
-                        let Ok(relative) = path.strip_prefix(&content_path_1) else {
-                            debug!(
-                                %path,
-                                "skipping entry for path that isn't relative to the content path"
-                            );
-                            return;
-                        };
-
-                        if relative
-                            .components()
-                            .any(|component| component.as_str().starts_with('.'))
-                        {
-                            debug!(
-                                %path,
-                                "skipping entry for a path containing a hidden file or directory"
-                            );
-                            return;
-                        }
-
-                        if path
-                            .file_name()
-                            .map_or(false, |name| name == "4913" || name.ends_with('~'))
-                        {
-                            // nvim creates these when you write files. I think the ~ one is
-                            // intentional, but the 4913 thing seems to be a longstanding bug:
-                            //
-                            // https://github.com/neovim/neovim/issues/3460
-                            debug!(
-                                %path,
-                                "skipping entry that appears to be an editor temporary file"
-                            );
-                            return;
-                        }
-
-                        if !fs::try_exists(&path).await.unwrap_or_default() {
-                            warn!(%path, "event probably represents a deleted file");
-                            // TODO: handle deletions
-                        } else {
-                            let Ok(metadata) = fs::metadata(&path).await else {
-                                warn!(
-                                    %path,
-                                    "skipping entry because metadata could not be accessed"
-                                );
-                                return;
-                            };
-
-                            match content_1.load(path, metadata).await {
-                                Ok(_) => {
-                                    #[cfg(debug_assertions)]
-                                    {
-                                        info!("sending reload");
-                                        reloader.reload();
-                                    }
+                        match content_1.load(path, metadata).await {
+                            Ok(_) => {
+                                #[cfg(debug_assertions)]
+                                {
+                                    info!("sending reload");
+                                    reloader.reload();
                                 }
-                                Err(error) => {
-                                    warn!(%error, "failed to load content");
-                                }
+                            }
+                            Err(error) => {
+                                warn!(%error, "failed to load content");
                             }
                         }
                     }
-                    .instrument(span!(Level::ERROR, "handle_event")),
-                );
+                });
             }
 
             warn!("event sender hung up");
@@ -284,6 +281,7 @@ impl Content {
         }
     }
 
+    #[instrument(name = "load_content", level = "ERROR", skip_all)]
     pub async fn load<P>(&self, path: P, metadata: Metadata) -> Result<(), LoadContentError>
     where
         P: AsRef<Utf8Path>,
