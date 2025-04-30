@@ -15,7 +15,7 @@ pub struct PostRef<'a> {
     pub(super) show_drafts: bool,
 }
 
-impl<'a> Render for PostRef<'a> {
+impl Render for PostRef<'_> {
     fn render(&self) -> Markup {
         match self.guard.deref() {
             post @ Post::Single {
@@ -97,7 +97,7 @@ pub struct PageRef<'a> {
     pub(super) guard: RwLockReadGuard<'a, Page>,
 }
 
-impl<'a> Render for PageRef<'a> {
+impl Render for PageRef<'_> {
     fn render(&self) -> Markup {
         let page = self.guard.deref();
 

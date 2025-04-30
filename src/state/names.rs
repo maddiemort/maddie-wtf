@@ -48,7 +48,7 @@ pub enum ParseTagNameError {
 
 struct TagNameVisitor;
 
-impl<'de> Visitor<'de> for TagNameVisitor {
+impl Visitor<'_> for TagNameVisitor {
     type Value = TagName;
 
     fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {

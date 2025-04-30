@@ -160,7 +160,7 @@ impl Config {
 
                     if path
                         .file_name()
-                        .map_or(false, |name| name == "4913" || name.ends_with('~'))
+                        .is_some_and(|name| name == "4913" || name.ends_with('~'))
                     {
                         // nvim creates these when you write files. I think the ~ one is
                         // intentional, but the 4913 thing seems to be a longstanding bug:
