@@ -65,6 +65,38 @@ $onehalf-dark-bg: #282c34;
   src: url('/static/lora-600.woff2') format('woff2');
 }
 
+@font-face {
+  font-display: swap;
+  font-family: 'IBM Plex Sans';
+  font-style: italic;
+  font-weight: 400;
+  src: url('/static/IBMPlexSans-Italic.woff2') format('woff2');
+}
+
+@font-face {
+  font-display: swap;
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 400;
+  src: url('/static/IBMPlexSans-Regular.woff2') format('woff2');
+}
+
+@font-face {
+  font-display: swap;
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 600;
+  src: url('/static/IBMPlexSans-SemiBold.woff2') format('woff2');
+}
+
+@font-face {
+  font-display: swap;
+  font-family: 'IBM Plex Sans';
+  font-style: italic;
+  font-weight: 600;
+  src: url('/static/IBMPlexSans-SemiBoldItalic.woff2') format('woff2');
+}
+
 // iosevka-regular
 @font-face {
   font-display: swap;
@@ -84,7 +116,7 @@ body {
   color: var(--text);
   background-color: var(--bg);
 
-  font-family: 'Lora', serif;
+  font-family: 'IBM Plex Sans', sans-serif;
 }
 
 em {
