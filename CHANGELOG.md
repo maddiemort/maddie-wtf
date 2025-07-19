@@ -1,8 +1,15 @@
 # Changelog
 
-## [v0.1.2](https://github.com/maddiemort/maddie-wtf/compare/v0.1.1...e09eca9be83c3842e33948fdf71690a25cadc1d8) (2025-07-19)
+## [v0.1.3](https://github.com/maddiemort/maddie-wtf/compare/v0.1.2...7a8afdcaeacb6df967044547a6e39f8303bf5edd) (2025-07-19)
 
-### Features
+### Fixes
+
+* Nix Rust toolchain missing `version` attribute
+([7a8afdc](https://github.com/maddiemort/maddie-wtf/commit/7a8afdcaeacb6df967044547a6e39f8303bf5edd))
+
+### [v0.1.2](https://github.com/maddiemort/maddie-wtf/compare/v0.1.1...v0.1.2) (2025-07-19)
+
+#### Features
 
 * set font to IBM Plex Sans
 ([466280a](https://github.com/maddiemort/maddie-wtf/commit/466280a863f62efb90692ae6fa88efaf482929aa))
