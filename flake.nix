@@ -173,7 +173,9 @@
 
       rustPkgs = pkgs.rustBuilder.makePackageSet {
         packageFun = import ./Cargo.nix;
-        rustToolchain = pkgs.rust-toolchain;
+        rustToolchain = pkgs.rust-toolchain // {
+          version = "1.86.0";
+        };
 
         packageOverrides = pkgs: pkgs.rustBuilder.overrides.all ++ [
           (pkgs.rustBuilder.rustLib.makeOverride {
