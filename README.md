@@ -54,8 +54,6 @@ The overall list of things that has to happen for each release is as follows:
   && nix fmt`.
 - That commit should include the updated `CHANGELOG.md`, generated with `convco changelog -u
   $(convco version --bump) > CHANGELOG.md`.
-  - Unfortunately, after doing this you'll have to update the file to replace `HEAD` in the URL in
-    the new section heading with `v<version>`.
 - That commit should be tagged with `v<version>`.
 - The commit should be pushed to `main`, and the tag pushed as well. This will trigger the
   [`cargo-dist`][cargo-dist] workflow to build the artifacts and create the release on GitHub.
