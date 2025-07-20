@@ -22,7 +22,7 @@ pub async fn index(
     debug!(route = %request.uri(), "handling request");
 
     if let Some(page) = content.page("_index").await {
-        Ok(pages::index(page, theme).await)
+        Ok(pages::page(page, theme).await)
     } else {
         Err(not_found(request).await)
     }

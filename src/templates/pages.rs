@@ -8,20 +8,9 @@ use crate::{
     templates::wrappers,
 };
 
-pub async fn index(page: PageRef<'_>, theme: Theme) -> Markup {
+pub async fn page(page: PageRef<'_>, theme: Theme) -> Markup {
     wrappers::base(
-        None,
-        theme,
-        html! {
-            (page)
-        },
-    )
-    .await
-}
-
-pub async fn _page(page: PageRef<'_>, theme: Theme) -> Markup {
-    wrappers::base(
-        Some(&page.metadata.title),
+        page.metadata.title.as_deref(),
         theme,
         html! {
             (page)
