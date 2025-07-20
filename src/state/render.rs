@@ -254,6 +254,11 @@ impl Render for PostsRef<'_> {
                             }
                         }
                         (PreEscaped(post.summary()))
+                        p {
+                            a href=(format!("/posts/{}", path)) {
+                                "Read more"
+                            }
+                        }
                     }
                 }
             }
@@ -464,6 +469,11 @@ impl Render for ChronoRef<'_> {
                             }
                         }
                         (PreEscaped(entry.summary()))
+                        p {
+                            a href=(format!("/posts/{}", entry.path())) {
+                                "Read more"
+                            }
+                        }
                     }
                 }
             }
@@ -653,6 +663,11 @@ impl Render for TaggedRef<'_> {
                             }
                         }
                         (PreEscaped(post.summary()))
+                        p {
+                            a href=(format!("/posts/{}", path)) {
+                                "Read more"
+                            }
+                        }
                     }
                 }
             }
