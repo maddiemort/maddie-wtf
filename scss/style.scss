@@ -221,8 +221,9 @@ h1.sitetitle {
   font-size: 2.35rem;
 }
 
-ul {
-  list-style: "⬩" inside;
+main ul {
+  list-style: "⬩" outside;
+  padding-inline-start: 1rem;
 
   li {
     margin: 0.25rem 0;
@@ -233,6 +234,7 @@ header.siteheader,
 ul.frontmatter {
   display: flex;
   list-style: none;
+  padding-inline-start: 0px;
 
   li {
     display: inline;
