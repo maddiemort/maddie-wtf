@@ -645,9 +645,9 @@ impl Render for TaggedRef<'_> {
                                 }
                                 @for tag in post.tags() {
                                     li {
-                                        // a href=(format!("/tagged/{}", tag)) {
+                                        a href=(format!("/tagged/{}", tag)) {
                                             code { (tag) }
-                                        // }
+                                        }
                                     }
                                 }
                             }
