@@ -21,6 +21,7 @@ pub async fn base(title: Option<&str>, theme: Theme, content: Markup) -> Markup 
 
                     nav role="navigation" {
                         ul {
+                            li { a href="/projects" { "projects" } }
                             li { a href="/posts" { "posts" } }
                             li { a href="/chrono" { "chrono" } }
                             // li { a href="/tags" { "tags" } }
