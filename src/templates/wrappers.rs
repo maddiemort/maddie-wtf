@@ -15,7 +15,7 @@ pub async fn base(title: Option<&str>, theme: Theme, content: Markup) -> Markup 
                 header class="siteheader" role="banner" {
                     h1 class="sitetitle" {
                         a href="/" {
-                            "maddie, wtf?!"
+                            "Madeleine Mortensen"
                         }
                     }
 
