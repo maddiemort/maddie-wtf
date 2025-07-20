@@ -86,6 +86,8 @@ async fn main() {
     #[cfg(debug_assertions)]
     let app = app.route("/break", get(handlers::internal_error));
 
+    let app = app.route("/:page", get(handlers::page));
+
     let state = match config.load_state(reloader).await {
         Ok(state) => state,
         Err(error) => {

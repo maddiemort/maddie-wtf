@@ -28,6 +28,21 @@ pub async fn index(
     }
 }
 
+pub async fn page(
+    State(content): State<Content>,
+    State(theme): State<Theme>,
+    Path(page): Path<String>,
+    request: Request<Body>,
+) -> Result<Markup, HandlerError> {
+    debug!(route = %request.uri(), "handling request");
+
+    if let Some(page) = content.page(page).await {
+        Ok(pages::page(page, theme).await)
+    } else {
+        Err(not_found(request).await)
+    }
+}
+
 pub async fn posts(
     State(content): State<Content>,
     State(theme): State<Theme>,
