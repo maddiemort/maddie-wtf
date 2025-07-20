@@ -73,6 +73,7 @@ async fn main() {
         .route("/posts", get(handlers::posts))
         .route("/posts/:post", get(handlers::post))
         .route("/chrono", get(handlers::chrono))
+        .route("/tags", get(handlers::tags))
         .route("/style.css", get(handlers::stylesheet));
 
     let app = app.nest_service(

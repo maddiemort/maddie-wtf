@@ -88,6 +88,18 @@ pub async fn chrono(
     Ok(pages::chrono(posts, theme).await)
 }
 
+pub async fn tags(
+    State(content): State<Content>,
+    State(theme): State<Theme>,
+    State(settings): State<Settings>,
+    request: Request<Body>,
+) -> Result<Markup, HandlerError> {
+    debug!(route = %request.uri(), "handling request");
+
+    let posts = content.nodes(settings.show_drafts()).await.into_tags();
+    Ok(pages::tags(posts, theme).await)
+}
+
 pub async fn stylesheet(request: Request<Body>) -> Result<Response<String>, HandlerError> {
     debug!(route = %request.uri(), "handling request");
 

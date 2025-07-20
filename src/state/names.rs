@@ -7,7 +7,7 @@ use serde::{
 };
 use thiserror::Error;
 
-#[derive(Clone, Debug, Hash, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct TagName(String);
 
 impl TryFrom<String> for TagName {

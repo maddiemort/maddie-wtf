@@ -223,6 +223,10 @@ h1.sitetitle {
 
 ul {
   list-style: "⬩" inside;
+
+  li {
+    margin: 0.25rem 0;
+  }
 }
 
 header.siteheader,

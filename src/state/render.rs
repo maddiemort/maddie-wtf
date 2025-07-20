@@ -145,6 +145,13 @@ impl<'a> NodesRef<'a> {
             show_drafts: self.show_drafts,
         }
     }
+
+    pub fn into_tags(self) -> TagsRef<'a> {
+        TagsRef {
+            guard: self.guard,
+            show_drafts: self.show_drafts,
+        }
+    }
 }
 
 pub struct PostsRef<'a> {
@@ -194,15 +201,13 @@ impl Render for PostsRef<'_> {
             main {
                 hgroup {
                     h1 { "Posts" }
-                    p {
-                        (PreEscaped(&markdown_to_html(
-                            "This is a list of posts in reverse chronological order by their \
-                            original date of posting. If a post has been updated since then, its \
-                            most recent update date is listed in its frontmatter, but if you want to \
-                            see the updates broken out separately, you should visit \
-                            [chrono](/chrono)."
-                        )))
-                    }
+                    (PreEscaped(&markdown_to_html(
+                        "This is a list of posts in reverse chronological order by their \
+                        original date of posting. If a post has been updated since then, its \
+                        most recent update date is listed in its frontmatter, but if you want to \
+                        see the updates broken out separately, you should visit \
+                        [chrono](/chrono)."
+                    )))
                 }
 
                 @for (path, post) in posts.iter().rev() {
@@ -416,13 +421,11 @@ impl Render for ChronoRef<'_> {
             main {
                 hgroup {
                     h1 { "Chrono" }
-                    p {
-                        (PreEscaped(&markdown_to_html(
-                            "This is a list of all updates made to posts in reverse chronological \
-                            order, including the initial post and its additions and edits since. \
-                            If you only want to see entire posts, you should visit [posts](/posts)."
-                        )))
-                    }
+                    (PreEscaped(&markdown_to_html(
+                        "This is a list of all updates made to posts in reverse chronological \
+                        order, including the initial post and its additions and edits since. \
+                        If you only want to see entire posts, you should visit [posts](/posts)."
+                    )))
                 }
 
                 @for entry in entries.iter().rev() {
@@ -453,6 +456,88 @@ impl Render for ChronoRef<'_> {
                             }
                         }
                         (PreEscaped(entry.summary()))
+                    }
+                }
+            }
+        }
+    }
+}
+
+pub struct TagsRef<'a> {
+    pub(super) guard: RwLockReadGuard<'a, HashMap<Utf8PathBuf, Node>>,
+    pub(super) show_drafts: bool,
+}
+
+impl Render for TagsRef<'_> {
+    fn render(&self) -> Markup {
+        let nodes = self.guard.deref();
+
+        let mut tags = HashMap::<TagName, Vec<_>>::new();
+
+        for (path, post) in nodes
+            .iter()
+            .filter_map(|(path, node)| {
+                if let Node::Post(post) = node {
+                    Some((path.as_path(), post))
+                } else {
+                    None
+                }
+            })
+            .filter(|(_, post)| {
+                if !self.show_drafts {
+                    // If we're not showing drafts, then filter out the following things:
+                    //
+                    // - Posts that are only a single entry that's a draft
+                    // - Posts that are a thread where we can't display any of the entries (i.e. the
+                    //   first entry is a draft, which implies the following are also drafts)
+                    let is_draft = match post {
+                        Post::Single { metadata, .. } => metadata.draft,
+                        Post::Thread { entries, .. } => {
+                            entries
+                                .first()
+                                .expect("a post cannot have no entries")
+                                .metadata
+                                .draft
+                        }
+                    };
+
+                    !is_draft
+                } else {
+                    true
+                }
+            })
+        {
+            for tag in post.tags() {
+                tags.entry(tag.clone()).or_default().push((path, post));
+            }
+        }
+
+        let mut tags_list = tags.iter().collect::<Vec<_>>();
+        tags_list.sort_by_key(|(name, _)| *name);
+
+        html! {
+            main {
+                h1 { "Tags" }
+                (PreEscaped(&markdown_to_html(
+                    "This is a list of all tags found on [posts](/posts)."
+                )))
+
+                hr;
+
+                ul {
+                    @for (tag, posts) in tags_list {
+                        @let posts_len = posts.len();
+                        li {
+                            code { (tag) }
+                            " ("
+                            (posts_len)
+                            @if posts_len == 1 {
+                                " post"
+                            } @else {
+                                " posts"
+                            }
+                            ")"
+                        }
                     }
                 }
             }
