@@ -250,6 +250,16 @@ header.siteheader {
   text-align: center;
 }
 
+@media screen and (max-width: 700px) {
+  header.siteheader {
+    flex-direction: column;
+  }
+
+  h1.sitetitle {
+    margin-bottom: 0px;
+  }
+}
+
 footer.sitefooter {
   border-top: 1px solid var(--rule);
 
