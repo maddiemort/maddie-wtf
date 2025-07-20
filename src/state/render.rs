@@ -462,7 +462,7 @@ impl Render for ChronoRef<'_> {
                                 @for tag in entry.tags() {
                                     li {
                                         a href=(format!("/tagged/{}", tag)) {
-                                            (tag)
+                                            code { (tag) }
                                         }
                                     }
                                 }
@@ -546,10 +546,8 @@ impl Render for TagsRef<'_> {
                     @for (tag, posts) in tags_list {
                         @let posts_len = posts.len();
                         li {
-                            code {
-                                a href=(format!("/tagged/{}", tag)) {
-                                    (tag)
-                                }
+                            a href=(format!("/tagged/{}", tag)) {
+                                code { (tag) }
                             }
                             " ("
                             (posts_len)
