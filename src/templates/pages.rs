@@ -59,7 +59,7 @@ pub async fn not_found(theme: Theme) -> Markup {
         html! {
             main class="error" {
                 h1 {
-                    "not found"
+                    "Not Found"
                 }
 
                 p {
@@ -78,7 +78,7 @@ pub async fn internal_error(theme: Theme) -> Markup {
         html! {
             main class="error" {
                 h1 {
-                    "internal server error"
+                    "Internal Server Error"
                 }
 
                 p {
