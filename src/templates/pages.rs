@@ -2,11 +2,25 @@ use maud::{html, Markup};
 
 use crate::{
     state::{
-        render::{ChronoRef, PageRef, PostRef, PostsRef},
+        render::{ChronoRef, PageRef, PostRef, PostsRef, RecentPostsRef},
         Theme,
     },
     templates::wrappers,
 };
+
+pub async fn index(index: PageRef<'_>, recent_posts: RecentPostsRef<'_>, theme: Theme) -> Markup {
+    wrappers::base(
+        index.metadata.title.as_deref(),
+        theme,
+        html! {
+            main {
+                (index)
+                (recent_posts)
+            }
+        },
+    )
+    .await
+}
 
 pub async fn page(page: PageRef<'_>, theme: Theme) -> Markup {
     wrappers::base(

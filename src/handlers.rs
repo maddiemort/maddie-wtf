@@ -17,12 +17,17 @@ const STYLESHEET: &str = include_str!(concat!(env!("OUT_DIR"), "/style.css"));
 pub async fn index(
     State(content): State<Content>,
     State(theme): State<Theme>,
+    State(settings): State<Settings>,
     request: Request<Body>,
 ) -> Result<Markup, HandlerError> {
     debug!(route = %request.uri(), "handling request");
 
-    if let Some(page) = content.page("_index").await {
-        Ok(pages::page(page, theme).await)
+    let recent_posts = content
+        .nodes(settings.show_drafts())
+        .await
+        .into_recent_posts();
+    if let Some(index) = content.page("_index").await {
+        Ok(pages::index(index, recent_posts, theme).await)
     } else {
         Err(not_found(request).await)
     }

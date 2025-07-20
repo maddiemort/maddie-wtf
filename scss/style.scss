@@ -221,9 +221,14 @@ h1.sitetitle {
   font-size: 2.35rem;
 }
 
+ul {
+  list-style: "⬩" inside;
+}
+
 header.siteheader,
 ul.frontmatter {
   display: flex;
+  list-style: none;
 
   li {
     display: inline;

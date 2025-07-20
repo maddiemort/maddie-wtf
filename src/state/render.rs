@@ -24,7 +24,7 @@ impl Render for PostRef<'_> {
                 html_content,
             } => html! {
                 article {
-                    (PreEscaped(post.html_title(1)))
+                    (PreEscaped(post.html_title(Some(1))))
                     ul class="frontmatter" {
                         li {
                             time datetime=(post.date_posted()) {
@@ -59,7 +59,7 @@ impl Render for PostRef<'_> {
 
                 html! {
                     article {
-                        (PreEscaped(post.html_title(1)))
+                        (PreEscaped(post.html_title(Some(1))))
                         @for (i, entry) in filtered_entries.iter().enumerate() {
                             @if i > 0 {
                                 hr;
@@ -127,6 +127,13 @@ pub struct NodesRef<'a> {
 impl<'a> NodesRef<'a> {
     pub fn into_posts(self) -> PostsRef<'a> {
         PostsRef {
+            guard: self.guard,
+            show_drafts: self.show_drafts,
+        }
+    }
+
+    pub fn into_recent_posts(self) -> RecentPostsRef<'a> {
+        RecentPostsRef {
             guard: self.guard,
             show_drafts: self.show_drafts,
         }
@@ -234,6 +241,70 @@ impl Render for PostsRef<'_> {
                             }
                         }
                         (PreEscaped(post.summary()))
+                    }
+                }
+            }
+        }
+    }
+}
+
+pub struct RecentPostsRef<'a> {
+    pub(super) guard: RwLockReadGuard<'a, HashMap<Utf8PathBuf, Node>>,
+    pub(super) show_drafts: bool,
+}
+
+impl Render for RecentPostsRef<'_> {
+    fn render(&self) -> Markup {
+        let nodes = self.guard.deref();
+        let mut posts = nodes
+            .iter()
+            .filter_map(|(path, node)| {
+                if let Node::Post(post) = node {
+                    Some((path.as_path(), post))
+                } else {
+                    None
+                }
+            })
+            .filter(|(_, post)| {
+                if !self.show_drafts {
+                    // If we're not showing drafts, then filter out the following things:
+                    //
+                    // - Posts that are only a single entry that's a draft
+                    // - Posts that are a thread where we can't display any of the entries (i.e. the
+                    //   first entry is a draft, which implies the following are also drafts)
+                    let is_draft = match post {
+                        Post::Single { metadata, .. } => metadata.draft,
+                        Post::Thread { entries, .. } => {
+                            entries
+                                .first()
+                                .expect("a post cannot have no entries")
+                                .metadata
+                                .draft
+                        }
+                    };
+
+                    !is_draft
+                } else {
+                    true
+                }
+            })
+            .collect::<Vec<_>>();
+        posts.sort_by_key(|(_, post)| post.date_posted());
+
+        html! {
+            h1 { "Recent Posts" }
+
+            ul {
+                @for (path, post) in posts.iter().rev().take(5) {
+                    li {
+                        a href=(format!("/posts/{}", path)) {
+                            (PreEscaped(post.html_title(None)))
+                        }
+                        " ("
+                        time datetime=(post.date_posted()) {
+                            (post.date_posted().format("%d %B %Y"))
+                        }
+                        ")"
                     }
                 }
             }
