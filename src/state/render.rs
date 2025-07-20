@@ -34,7 +34,7 @@ impl Render for PostRef<'_> {
                         @for tag in post.tags() {
                             li {
                                 // a href=(format!("/tagged/{}", tag)) {
-                                    (tag)
+                                    code { (tag) }
                                 // }
                             }
                         }
@@ -74,7 +74,7 @@ impl Render for PostRef<'_> {
                                     @for tag in post.tags() {
                                         li {
                                             // a href=(format!("/tagged/{}", tag)) {
-                                                (tag)
+                                                code { (tag) }
                                             // }
                                         }
                                     }
@@ -227,7 +227,7 @@ impl Render for PostsRef<'_> {
                                 @for tag in post.tags() {
                                     li {
                                         // a href=(format!("/tagged/{}", tag)) {
-                                            (tag)
+                                            code { (tag) }
                                         // }
                                     }
                                 }
