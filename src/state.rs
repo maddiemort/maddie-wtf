@@ -551,6 +551,16 @@ impl Content {
             show_drafts,
         }
     }
+
+    pub async fn tag_exists(&self, tag: &TagName) -> bool {
+        self.nodes.read().await.iter().any(|(_, node)| {
+            if let Node::Post(post) = node {
+                post.has_tag(tag)
+            } else {
+                false
+            }
+        })
+    }
 }
 
 impl FromRef<State> for Content {
@@ -683,6 +693,13 @@ impl Post {
         match self {
             Post::Single { metadata, .. } => metadata.tags.iter(),
             Post::Thread { metadata, .. } => metadata.tags.iter(),
+        }
+    }
+
+    pub fn has_tag(&self, tag: &TagName) -> bool {
+        match self {
+            Post::Single { metadata, .. } => metadata.tags.contains(tag),
+            Post::Thread { metadata, .. } => metadata.tags.contains(tag),
         }
     }
 

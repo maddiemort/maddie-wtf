@@ -2,7 +2,7 @@ use maud::{html, Markup};
 
 use crate::{
     state::{
-        render::{ChronoRef, PageRef, PostRef, PostsRef, RecentPostsRef, TagsRef},
+        render::{ChronoRef, PageRef, PostRef, PostsRef, RecentPostsRef, TaggedRef, TagsRef},
         Theme,
     },
     templates::wrappers,
@@ -72,6 +72,17 @@ pub async fn tags(tags: TagsRef<'_>, theme: Theme) -> Markup {
         theme,
         html! {
             (tags)
+        },
+    )
+    .await
+}
+
+pub async fn tagged(tagged: TaggedRef<'_>, theme: Theme) -> Markup {
+    wrappers::base(
+        Some(&tagged.tag.to_string()),
+        theme,
+        html! {
+            (tagged)
         },
     )
     .await

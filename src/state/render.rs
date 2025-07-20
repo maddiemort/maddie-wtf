@@ -33,9 +33,9 @@ impl Render for PostRef<'_> {
                         }
                         @for tag in post.tags() {
                             li {
-                                // a href=(format!("/tagged/{}", tag)) {
+                                a href=(format!("/tagged/{}", tag)) {
                                     code { (tag) }
-                                // }
+                                }
                             }
                         }
                     }
@@ -73,9 +73,9 @@ impl Render for PostRef<'_> {
                                 @if i == 0 {
                                     @for tag in post.tags() {
                                         li {
-                                            // a href=(format!("/tagged/{}", tag)) {
+                                            a href=(format!("/tagged/{}", tag)) {
                                                 code { (tag) }
-                                            // }
+                                            }
                                         }
                                     }
                                 }
@@ -149,6 +149,14 @@ impl<'a> NodesRef<'a> {
     pub fn into_tags(self) -> TagsRef<'a> {
         TagsRef {
             guard: self.guard,
+            show_drafts: self.show_drafts,
+        }
+    }
+
+    pub fn into_tagged(self, tag: TagName) -> TaggedRef<'a> {
+        TaggedRef {
+            guard: self.guard,
+            tag,
             show_drafts: self.show_drafts,
         }
     }
@@ -238,9 +246,9 @@ impl Render for PostsRef<'_> {
                                 }
                                 @for tag in post.tags() {
                                     li {
-                                        // a href=(format!("/tagged/{}", tag)) {
+                                        a href=(format!("/tagged/{}", tag)) {
                                             code { (tag) }
-                                        // }
+                                        }
                                     }
                                 }
                             }
@@ -448,9 +456,9 @@ impl Render for ChronoRef<'_> {
                                 }
                                 @for tag in entry.tags() {
                                     li {
-                                        // a href=(format!("/tagged/{}", tag)) {
+                                        a href=(format!("/tagged/{}", tag)) {
                                             (tag)
-                                        // }
+                                        }
                                     }
                                 }
                             }
@@ -528,7 +536,11 @@ impl Render for TagsRef<'_> {
                     @for (tag, posts) in tags_list {
                         @let posts_len = posts.len();
                         li {
-                            code { (tag) }
+                            code {
+                                a href=(format!("/tagged/{}", tag)) {
+                                    (tag)
+                                }
+                            }
                             " ("
                             (posts_len)
                             @if posts_len == 1 {
@@ -538,6 +550,109 @@ impl Render for TagsRef<'_> {
                             }
                             ")"
                         }
+                    }
+                }
+            }
+        }
+    }
+}
+
+pub struct TaggedRef<'a> {
+    pub(super) guard: RwLockReadGuard<'a, HashMap<Utf8PathBuf, Node>>,
+    pub(crate) tag: TagName,
+    pub(super) show_drafts: bool,
+}
+
+impl Render for TaggedRef<'_> {
+    fn render(&self) -> Markup {
+        let nodes = self.guard.deref();
+        let mut posts = nodes
+            .iter()
+            .filter_map(|(path, node)| {
+                if let Node::Post(post) = node {
+                    Some((path.as_path(), post))
+                } else {
+                    None
+                }
+            })
+            .filter(|(_, post)| {
+                if !self.show_drafts {
+                    // If we're not showing drafts, then filter out the following things:
+                    //
+                    // - Posts that are only a single entry that's a draft
+                    // - Posts that are a thread where we can't display any of the entries (i.e. the
+                    //   first entry is a draft, which implies the following are also drafts)
+                    let is_draft = match post {
+                        Post::Single { metadata, .. } => metadata.draft,
+                        Post::Thread { entries, .. } => {
+                            entries
+                                .first()
+                                .expect("a post cannot have no entries")
+                                .metadata
+                                .draft
+                        }
+                    };
+
+                    !is_draft
+                } else {
+                    true
+                }
+            })
+            .filter(|(_, post)| post.has_tag(&self.tag))
+            .collect::<Vec<_>>();
+        posts.sort_by_key(|(_, post)| post.date_posted());
+
+        html! {
+            main {
+                hgroup {
+                    h1 { "Posts Tagged " code { (self.tag) } }
+                    (PreEscaped(&markdown_to_html(
+                        format!(
+                            "This is a list of all posts tagged with `{}`, in reverse \
+                            chronological order by their original date of posting. If a post has \
+                            been updated since then, its most recent update date is listed in its \
+                            frontmatter.",
+                            self.tag
+                        ).as_str()
+                    )))
+                }
+
+                @for (path, post) in posts.iter().rev() {
+                    hr;
+
+                    section {
+                        hgroup {
+                            h2 {
+                                ({
+                                    let title = post.md_title();
+                                    let md = format!("[{}](/posts/{})", title, path);
+                                    PreEscaped(markdown_to_html(&md))
+                                })
+                            }
+                            ul class="frontmatter" {
+                                li {
+                                    time datetime=(post.date_posted()) {
+                                        (post.date_posted().format("%d %B %Y"))
+                                    }
+                                }
+                                @if post.date_posted() != post.date_updated(self.show_drafts) {
+                                    li {
+                                        "updated "
+                                        time datetime=(post.date_updated(self.show_drafts)) {
+                                            (post.date_updated(self.show_drafts).format("%d %B %Y"))
+                                        }
+                                    }
+                                }
+                                @for tag in post.tags() {
+                                    li {
+                                        // a href=(format!("/tagged/{}", tag)) {
+                                            code { (tag) }
+                                        // }
+                                    }
+                                }
+                            }
+                        }
+                        (PreEscaped(post.summary()))
                     }
                 }
             }

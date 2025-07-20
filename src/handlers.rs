@@ -4,11 +4,12 @@ use axum::{
     http::{header, Request, Response},
 };
 use maud::Markup;
+use tap::TryConv;
 use tracing::{debug, warn};
 
 use crate::{
     errors::HandlerError,
-    state::{Content, Settings, Theme},
+    state::{names::TagName, Content, Settings, Theme},
     templates::pages,
 };
 
@@ -98,6 +99,32 @@ pub async fn tags(
 
     let posts = content.nodes(settings.show_drafts()).await.into_tags();
     Ok(pages::tags(posts, theme).await)
+}
+
+pub async fn tagged(
+    State(content): State<Content>,
+    State(theme): State<Theme>,
+    State(settings): State<Settings>,
+    Path(tag): Path<String>,
+    request: Request<Body>,
+) -> Result<Markup, HandlerError> {
+    debug!(route = %request.uri(), "handling request");
+
+    match tag.try_conv::<TagName>() {
+        Ok(tag) => {
+            if content.tag_exists(&tag).await {
+                let posts = content.nodes(settings.show_drafts()).await.into_tagged(tag);
+                Ok(pages::tagged(posts, theme).await)
+            } else {
+                warn!(%tag, "requested tag doesn't exist");
+                Err(HandlerError::NotFound)
+            }
+        }
+        Err(error) => {
+            warn!(%error, "requested tag is invalid");
+            Err(HandlerError::NotFound)
+        }
+    }
 }
 
 pub async fn stylesheet(request: Request<Body>) -> Result<Response<String>, HandlerError> {
