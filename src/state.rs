@@ -757,6 +757,7 @@ pub struct ThreadEntryMetadata {
 
 #[derive(Clone, Debug)]
 pub struct Page {
+    #[allow(dead_code)]
     pub metadata: PageMetadata,
     pub html_content: String,
 }
@@ -764,6 +765,7 @@ pub struct Page {
 #[derive(Clone, Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct PageMetadata {
+    #[allow(dead_code)]
     pub title: String,
 }
 
