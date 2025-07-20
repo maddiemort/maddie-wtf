@@ -28,7 +28,7 @@ impl Render for PostRef<'_> {
                     ul class="frontmatter" {
                         li {
                             time datetime=(post.date_posted()) {
-                                (post.date_posted().format("%e %B %Y"))
+                                (post.date_posted().format("%d %B %Y"))
                             }
                         }
                         @for tag in post.tags() {
@@ -67,7 +67,7 @@ impl Render for PostRef<'_> {
                             ul class="frontmatter" {
                                 li {
                                     time datetime=(entry.metadata.date) {
-                                        (entry.metadata.date.format("%e %B %Y"))
+                                        (entry.metadata.date.format("%d %B %Y"))
                                     }
                                 }
                                 @if i == 0 {
@@ -220,14 +220,14 @@ impl Render for PostsRef<'_> {
                             ul class="frontmatter" {
                                 li {
                                     time datetime=(post.date_posted()) {
-                                        (post.date_posted().format("%e %B %Y"))
+                                        (post.date_posted().format("%d %B %Y"))
                                     }
                                 }
                                 @if post.date_posted() != post.date_updated(self.show_drafts) {
                                     li {
                                         "updated "
                                         time datetime=(post.date_updated(self.show_drafts)) {
-                                            (post.date_updated(self.show_drafts).format("%e %B %Y"))
+                                            (post.date_updated(self.show_drafts).format("%d %B %Y"))
                                         }
                                     }
                                 }
@@ -440,7 +440,7 @@ impl Render for ChronoRef<'_> {
                             ul class="frontmatter" {
                                 li {
                                     time datetime=(entry.date_updated()) {
-                                        (entry.date_updated().format("%e %B %Y"))
+                                        (entry.date_updated().format("%d %B %Y"))
                                     }
                                 }
                                 @for tag in entry.tags() {
