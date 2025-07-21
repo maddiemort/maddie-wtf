@@ -12,7 +12,7 @@ $onehalf-dark-bg: #282c34;
   --text: #{darken($onehalf-light-text, 10%)};
   --rule: #{lighten($onehalf-light-text, 50%)};
   --bg: #{lighten($onehalf-light-bg, 5%)};
-  --text-accent: #{darken($accent, 35%)};
+  --accent: #{darken($accent, 35%)};
 
   code,
   pre,
@@ -26,7 +26,7 @@ $onehalf-dark-bg: #282c34;
     --text: #{lighten($onehalf-dark-text, 10%)};
     --rule: #{darken($onehalf-dark-text, 50%)};
     --bg: #{darken($onehalf-dark-bg, 5%)};
-    --text-accent: #{$accent};
+    --accent: #{$accent};
 
     code,
     pre,
@@ -122,7 +122,7 @@ pre {
 }
 
 a {
-  color: var(--text-accent);
+  color: var(--accent);
 }
 
 a {
@@ -223,7 +223,7 @@ header.siteheader {
   text-align: center;
 }
 
-@media screen and (max-width: 700px) {
+@media screen and (max-width: 48rem) {
   header.siteheader {
     flex-direction: column;
   }
