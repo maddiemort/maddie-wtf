@@ -75,7 +75,7 @@ pub async fn footer() -> Markup {
 
 pub fn page_title(html_title: Markup) -> Markup {
     html! {
-        div class="title" {
+        h1 class="title" {
             (html_title)
         }
     }
