@@ -48,7 +48,7 @@ pub async fn post(post: PostRef<'_>, theme: Theme) -> Markup {
 
 pub async fn posts(posts: PostsRef<'_>, theme: Theme) -> Markup {
     wrappers::base(
-        Some("posts"),
+        Some("Posts"),
         theme,
         html! {
             (posts)
@@ -59,7 +59,7 @@ pub async fn posts(posts: PostsRef<'_>, theme: Theme) -> Markup {
 
 pub async fn chrono(chrono: ChronoRef<'_>, theme: Theme) -> Markup {
     wrappers::base(
-        Some("chrono"),
+        Some("Chrono"),
         theme,
         html! {
             (chrono)
@@ -70,7 +70,7 @@ pub async fn chrono(chrono: ChronoRef<'_>, theme: Theme) -> Markup {
 
 pub async fn tags(tags: TagsRef<'_>, theme: Theme) -> Markup {
     wrappers::base(
-        Some("tags"),
+        Some("Tags"),
         theme,
         html! {
             (tags)
