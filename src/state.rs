@@ -417,6 +417,7 @@ impl Content {
             draft: first_frontmatter.draft,
             tags: first_frontmatter.tags,
             date,
+            updated: first_frontmatter.updated,
         });
 
         while let Some((last_content, (this_raw_frontmatter, new_rest))) = rest
@@ -800,42 +801,58 @@ impl Post {
 
     pub fn date_updated(&self, include_draft_entries: bool) -> NaiveDate {
         match self {
-            Post::Single { metadata, .. } => metadata.date,
+            Post::Single { metadata, .. } => metadata.updated.unwrap_or(metadata.date),
             Post::Thread { entries, .. } => {
-                // If we're not including draft entries, then return the date of the last entry
-                // before the first one marked as a draft.
+                // If we're not including draft entries, then return the most recent date found in
+                // either the `date` or `updated` field of any entry between the first entry and
+                // the last non-draft entry.
                 //
                 // If all entries are drafts (or the first entry is a draft, which is treated as
-                // equivalent), return the date of the first entry because hopefully the caller
-                // won't be displaying this at all if they know they're not supposed to display
-                // drafts.
-                let entry_for_date = if include_draft_entries {
-                    entries.first().expect("a post cannot have no entries")
+                // equivalent), consider all entries when determining the maximum date - the caller
+                // should only be displaying that date if they're showing drafts, because otherwise
+                // they wouldn't be looking at a post that's entirely full of drafts in the first
+                // place.
+                if include_draft_entries {
+                    entries
+                        .iter()
+                        .map(|e| e.metadata.date)
+                        .chain(entries.iter().filter_map(|e| e.metadata.updated))
+                        .max()
+                        .expect("a threaded post cannot have zero entries")
                 } else {
                     entries
                         .iter()
                         .fold(
                             (
                                 false,
-                                entries.first().expect("a post cannot have no entries"),
+                                entries
+                                    .first()
+                                    .expect("a threaded post cannot have zero entries")
+                                    .metadata
+                                    .date,
                             ),
                             |(found_draft, acc), next| {
                                 let found_draft = found_draft || next.metadata.draft;
 
-                                // If we still haven't found a draft anywhere, that means *this* one
-                                // isn't a draft, so return it as the latest
-                                // non-draft entry.
                                 if !found_draft {
-                                    (found_draft, next)
+                                    // If we still haven't found a draft anywhere, that means *this*
+                                    // one isn't a draft, so include its date in the calculation.
+                                    (
+                                        found_draft,
+                                        acc.max(
+                                            next.metadata
+                                                .updated
+                                                .map(|up| up.max(next.metadata.date))
+                                                .unwrap_or(next.metadata.date),
+                                        ),
+                                    )
                                 } else {
                                     (found_draft, acc)
                                 }
                             },
                         )
                         .1
-                };
-
-                entry_for_date.metadata.date
+                }
             }
         }
     }
@@ -893,6 +910,7 @@ pub struct PostFrontmatter {
     draft: bool,
     #[serde(default)]
     tags: Vec<TagName>,
+    updated: Option<NaiveDate>,
 }
 
 #[derive(Clone, Debug)]
@@ -901,6 +919,7 @@ pub struct SinglePostMetadata {
     pub draft: bool,
     pub tags: Vec<TagName>,
     pub date: NaiveDate,
+    pub updated: Option<NaiveDate>,
 }
 
 impl SinglePostMetadata {
@@ -910,10 +929,15 @@ impl SinglePostMetadata {
             draft,
             tags,
             date,
+            updated,
         } = self;
         (
             ThreadMetadata { md_title, tags },
-            ThreadEntryMetadata { draft, date },
+            ThreadEntryMetadata {
+                draft,
+                date,
+                updated,
+            },
         )
     }
 }
@@ -930,6 +954,7 @@ pub struct ThreadEntryMetadata {
     #[serde(default)]
     pub draft: bool,
     pub date: NaiveDate,
+    pub updated: Option<NaiveDate>,
 }
 
 #[derive(Clone, Debug)]
