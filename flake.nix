@@ -223,6 +223,7 @@
         packages = with pkgs; [
           rust-toolchain
 
+          aha # For converting ANSI colored text to HTML
           cargo-dist
           cargo2nix
           convco
