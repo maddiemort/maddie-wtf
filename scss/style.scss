@@ -206,6 +206,13 @@ hr {
 .sitetitle {
   font-size: 2.35rem;
   font-weight: 600;
+  margin: 1rem 0;
+}
+
+.title {
+  font-size: 2rem;
+  font-weight: 600;
+  margin: 1rem 0;
 }
 
 :not(footer) > ul {
@@ -242,7 +249,6 @@ header.siteheader {
   align-items: center;
   justify-content: space-between;
   text-align: center;
-  padding-top: 1rem;
 }
 
 @media screen and (max-width: 48rem) {

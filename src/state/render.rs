@@ -24,7 +24,10 @@ impl Render for PostRef<'_> {
                 html_content,
             } => html! {
                 article {
-                    (PreEscaped(post.html_title(Some(1))))
+                    div class="title" {
+                        (PreEscaped(post.html_title()))
+                    }
+
                     ul class="frontmatter" {
                         li {
                             time datetime=(post.date_posted()) {
@@ -59,7 +62,10 @@ impl Render for PostRef<'_> {
 
                 html! {
                     article {
-                        (PreEscaped(post.html_title(Some(1))))
+                        div class="title" {
+                            (PreEscaped(post.html_title()))
+                        }
+
                         @for (i, entry) in filtered_entries.iter().enumerate() {
                             @if i > 0 {
                                 hr;
@@ -106,6 +112,9 @@ impl Render for PageRef<'_> {
         let page = self.guard.deref();
 
         html! {
+            @if let Some(title) = page.html_title() {
+                div class="title" { (PreEscaped(title)) }
+            }
             (PreEscaped(&page.html_content))
         }
     }
@@ -208,7 +217,7 @@ impl Render for PostsRef<'_> {
         html! {
             main {
                 hgroup {
-                    h1 { "Posts" }
+                    div class="title" { "Posts" }
                     (PreEscaped(&markdown_to_html(
                         "This is a list of posts in reverse chronological order by their \
                         original date of posting. If a post has been updated since then, its \
@@ -316,7 +325,7 @@ impl Render for RecentPostsRef<'_> {
                 @for (path, post) in posts.iter().rev().take(5) {
                     li {
                         a href=(format!("/posts/{}", path)) {
-                            (PreEscaped(post.html_title(None)))
+                            (PreEscaped(post.html_title()))
                         }
                         " ("
                         time datetime=(post.date_posted()) {
@@ -433,7 +442,7 @@ impl Render for ChronoRef<'_> {
         html! {
             main {
                 hgroup {
-                    h1 { "Chrono" }
+                    div class="title" { "Chrono" }
                     (PreEscaped(&markdown_to_html(
                         "This is a list of all updates made to posts in reverse chronological \
                         order, including the initial post and its additions and edits since. \
@@ -535,7 +544,7 @@ impl Render for TagsRef<'_> {
 
         html! {
             main {
-                h1 { "Tags" }
+                div class="title" { "Tags" }
                 (PreEscaped(&markdown_to_html(
                     "This is a list of all tags found on [posts](/posts)."
                 )))
@@ -613,7 +622,7 @@ impl Render for TaggedRef<'_> {
         html! {
             main {
                 hgroup {
-                    h1 { "Posts Tagged " code { (self.tag) } }
+                    div class="title" { "Posts Tagged " code { (self.tag) } }
                     (PreEscaped(&markdown_to_html(
                         format!(
                             "This is a list of all posts tagged with `{}`, in reverse \

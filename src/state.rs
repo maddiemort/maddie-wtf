@@ -770,17 +770,13 @@ impl Post {
         }
     }
 
-    pub fn html_title(&self, levels: Option<usize>) -> String {
-        if let Some(levels) = levels {
-            markdown_to_html(&format!("{} {}", "#".repeat(levels), self.md_title()))
-        } else {
-            let html = markdown_to_html(self.md_title());
+    pub fn html_title(&self) -> String {
+        let html = markdown_to_html(self.md_title());
 
-            html.strip_prefix("<p>")
-                .and_then(|title| title.strip_suffix("</p>\n"))
-                .map(|stripped| stripped.to_string())
-                .unwrap_or(html)
-        }
+        html.strip_prefix("<p>")
+            .and_then(|title| title.strip_suffix("</p>\n"))
+            .map(|stripped| stripped.to_string())
+            .unwrap_or(html)
     }
 
     pub fn summary(&self) -> &str {
@@ -940,6 +936,19 @@ pub struct ThreadEntryMetadata {
 pub struct Page {
     pub metadata: PageMetadata,
     pub html_content: String,
+}
+
+impl Page {
+    pub fn html_title(&self) -> Option<String> {
+        self.metadata.title.as_ref().map(|title| {
+            let html = markdown_to_html(title);
+
+            html.strip_prefix("<p>")
+                .and_then(|title| title.strip_suffix("</p>\n"))
+                .map(|stripped| stripped.to_string())
+                .unwrap_or(html)
+        })
+    }
 }
 
 #[derive(Clone, Debug, Deserialize)]
