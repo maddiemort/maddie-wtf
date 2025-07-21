@@ -453,17 +453,13 @@ impl Content {
                 let rest = rest.trim();
 
                 let html_summary = Self::build_html_summary(rest);
-                let mut html_content = markdown_to_html_toc_tagged(rest);
-
-                if let Some(toc) = Self::build_toc_list(&html_content) {
-                    html_content = format!(
-                        r#"<nav class="toc"><h2>Table of Contents</h2><ul id="toc-list">{toc}</ul></nav>{html_content}"#
-                    );
-                }
+                let html_content = markdown_to_html_toc_tagged(rest);
+                let html_toc = Self::build_toc_list(&html_content);
 
                 let post = Post::Single {
                     metadata,
                     html_summary,
+                    html_toc,
                     html_content,
                 };
 
@@ -486,11 +482,13 @@ impl Content {
                         let raw_content = raw_content.trim();
 
                         let html_summary = Self::build_html_summary(raw_content);
-                        let html_content = markdown_to_html(raw_content);
+                        let html_content = markdown_to_html_toc_tagged(raw_content);
+                        let html_toc = Self::build_toc_list(&html_content);
 
                         ThreadEntry {
                             metadata,
                             html_summary,
+                            html_toc,
                             html_content,
                         }
                     })
@@ -754,6 +752,7 @@ pub enum Post {
     Single {
         metadata: SinglePostMetadata,
         html_summary: String,
+        html_toc: Option<String>,
         html_content: String,
     },
     Thread {
@@ -883,6 +882,7 @@ impl Post {
 pub struct ThreadEntry {
     metadata: ThreadEntryMetadata,
     html_summary: String,
+    html_toc: Option<String>,
     html_content: String,
 }
 

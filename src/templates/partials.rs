@@ -156,3 +156,14 @@ fn tag_list<'a>(tags: impl Iterator<Item = &'a TagName>) -> Markup {
         }
     }
 }
+
+pub fn table_of_contents(toc_items: Markup) -> Markup {
+    html! {
+        nav class="toc" {
+            h2 { "Table of Contents" }
+            ul id="toc-list" {
+                (toc_items)
+            }
+        }
+    }
+}

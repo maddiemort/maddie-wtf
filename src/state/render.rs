@@ -24,6 +24,7 @@ impl Render for PostRef<'_> {
             post @ Post::Single {
                 metadata: _,
                 html_summary: _,
+                html_toc,
                 html_content,
             } => html! {
                 main {
@@ -35,6 +36,9 @@ impl Render for PostRef<'_> {
                             post.tags()
                         ))
 
+                        @if let Some(toc) = html_toc {
+                            (partials::table_of_contents(PreEscaped(toc.clone())))
+                        }
                         (PreEscaped(&html_content))
                     }
                 }
@@ -54,6 +58,17 @@ impl Render for PostRef<'_> {
                     }
                 }
 
+                let combined_toc = filtered_entries
+                    .iter()
+                    .flat_map(|entry| entry.html_toc.clone())
+                    .collect::<Vec<_>>();
+
+                let html_toc = if combined_toc.is_empty() {
+                    None
+                } else {
+                    Some(combined_toc.join(""))
+                };
+
                 html! {
                     main {
                         (partials::page_title(PreEscaped(post.html_title())))
@@ -62,6 +77,10 @@ impl Render for PostRef<'_> {
                             post.date_updated(self.show_drafts),
                             post.tags()
                         ))
+
+                        @if let Some(toc) = html_toc.as_ref() {
+                            (partials::table_of_contents(PreEscaped(toc.clone())))
+                        }
 
                         @for (i, entry) in filtered_entries.iter().enumerate() {
                             @if i > 0 {
