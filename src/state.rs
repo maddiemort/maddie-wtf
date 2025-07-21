@@ -6,7 +6,8 @@ use axum::extract::FromRef;
 use camino::{Utf8Path, Utf8PathBuf};
 use chrono::naive::NaiveDate;
 use comrak::{
-    markdown_to_html_with_plugins, plugins::syntect::SyntectAdapter, ComrakOptions, ComrakPlugins,
+    adapters::HeadingAdapter, markdown_to_html_with_plugins, plugins::syntect::SyntectAdapter,
+    ComrakOptions, ComrakPlugins,
 };
 use either::Either;
 use ignore::Walk;
@@ -56,6 +57,51 @@ lazy_static! {
 
 fn markdown_to_html(md_input: &str) -> String {
     markdown_to_html_with_plugins(md_input, &COMRAK_OPTIONS, &COMRAK_PLUGINS)
+}
+
+fn markdown_to_html_toc_tagged(md_input: &str) -> String {
+    let mut plugins = COMRAK_PLUGINS.clone();
+    plugins.render.heading_adapter = Some(&TocTagger);
+    markdown_to_html_with_plugins(md_input, &COMRAK_OPTIONS, &plugins)
+}
+
+struct TocTagger;
+
+impl HeadingAdapter for TocTagger {
+    fn enter(
+        &self,
+        output: &mut dyn io::Write,
+        heading: &comrak::adapters::HeadingMeta,
+        _sourcepos: Option<comrak::nodes::Sourcepos>,
+    ) -> io::Result<()> {
+        let slug = heading
+            .content
+            .chars()
+            .filter_map(|c| {
+                if c.is_ascii_alphabetic() {
+                    Some(c.to_ascii_lowercase())
+                } else if c.is_ascii_whitespace() {
+                    Some('-')
+                } else {
+                    None
+                }
+            })
+            .collect::<String>();
+
+        write!(
+            output,
+            r#"<!-- TOC marker --><h{} id="{}">"#,
+            heading.level, slug,
+        )
+    }
+
+    fn exit(
+        &self,
+        output: &mut dyn io::Write,
+        heading: &comrak::adapters::HeadingMeta,
+    ) -> io::Result<()> {
+        write!(output, "</h{}>", heading.level)
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -406,8 +452,13 @@ impl Content {
                 let rest = rest.trim();
 
                 let html_summary = Self::build_html_summary(rest);
+                let mut html_content = markdown_to_html_toc_tagged(rest);
 
-                let html_content = markdown_to_html(rest);
+                if let Some(toc) = Self::build_toc_list(&html_content) {
+                    html_content = format!(
+                        r#"<nav class="toc"><h2>Table of Contents</h2><ul id="toc-list">{toc}</ul></nav>{html_content}"#
+                    );
+                }
 
                 let post = Post::Single {
                     metadata,
@@ -479,6 +530,97 @@ impl Content {
 
         let raw_summary = raw_summary_paras.join("\n\n");
         markdown_to_html(&raw_summary)
+    }
+
+    fn build_toc_list(html_content: &str) -> Option<String> {
+        let mut toc = r#""#.to_owned();
+
+        let mut start_level = 1;
+        let mut toc_level = 1;
+        let mut any_entries = false;
+
+        for (i, (start_idx, _)) in html_content
+            .match_indices("<!-- TOC marker -->")
+            .enumerate()
+        {
+            // 27 is the number of characters from the opening angle bracket of the TOC
+            // marker comment until the first character of the heading ID.
+            //
+            // The full comment & heading tag in every one of these always looks like this
+            // (where `N` in the tag name tells us what heading level it is).
+            //
+            // ```
+            // <!-- TOC marker --><h1 id="heading-id-here">
+            // ```
+            let id_start = start_idx + 27;
+            let Some(len_to_close_quote) = html_content[id_start..].find('"') else {
+                continue;
+            };
+
+            // Similarly, 21 is the position of the level number within the <hN> tag in
+            // this string.
+            let level_idx = start_idx + 21;
+            let Some(level) = (match &html_content[level_idx..level_idx + 1] {
+                "1" => Some(1_usize),
+                "2" => Some(2),
+                "3" => Some(3),
+                "4" => Some(4),
+                "5" => Some(5),
+                "6" => Some(6),
+                _ => None,
+            }) else {
+                continue;
+            };
+
+            if i == 0 && level > toc_level {
+                // We're not starting with a TOC entry at level 1. We expect this to be
+                // normal - articles should generally only use h2 and lower.
+                start_level = level;
+                toc_level = level;
+            }
+
+            if level < start_level {
+                // We're processing a heading tag with a lower number than the first tag in
+                // the list. That means we're currently trying to _outdent_ the table of
+                // contents outside its bounds. We need to add at least one more <ul> tag
+                // to the _beginning_ of the TOC, as though we started at this level in the
+                // first place.
+
+                toc = format!("{}{toc}", "<ul>".repeat(start_level - level));
+                start_level = level;
+            }
+
+            let Some(open_tag_end) = html_content[level_idx..].find('>') else {
+                continue;
+            };
+            let Some(close_tag_start) = html_content[level_idx + open_tag_end..].find("</h") else {
+                continue;
+            };
+
+            let id = &html_content[id_start..(id_start + len_to_close_quote)];
+            let name = &html_content
+                [level_idx + open_tag_end + 1..level_idx + open_tag_end + close_tag_start];
+
+            while toc_level < level {
+                toc = format!("{toc}<ul>");
+                toc_level += 1;
+            }
+
+            while toc_level > level {
+                toc = format!("{toc}</ul>");
+                toc_level -= 1;
+            }
+
+            toc = format!(r##"{toc}<li><a href="#{id}">{name}</a></li>"##);
+            any_entries |= true;
+        }
+
+        while toc_level > start_level {
+            toc = format!("{toc}</ul>");
+            toc_level -= 1;
+        }
+
+        any_entries.then_some(toc)
     }
 
     async fn load_page(&self, relative_path: &Utf8Path) -> Result<Page, LoadPageError> {
