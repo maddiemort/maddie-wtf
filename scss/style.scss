@@ -16,7 +16,8 @@ $onehalf-dark-bg: #282c34;
 
   code,
   pre,
-  blockquote {
+  blockquote,
+  aside {
     background-color: $onehalf-light-bg;
   }
 }
@@ -30,7 +31,8 @@ $onehalf-dark-bg: #282c34;
 
     code,
     pre,
-    blockquote {
+    blockquote,
+    aside {
       background-color: $onehalf-dark-bg;
     }
   }
@@ -94,10 +96,10 @@ em {
   font-style: italic;
 }
 
-blockquote {
-  border-left: 3px solid var(--text);
+blockquote,
+aside {
   margin: 1rem 0;
-  padding: 0.5rem 0.5rem;
+  padding: 0.5rem 1rem;
 
   *:first-child {
     margin-top: 0;
@@ -106,6 +108,14 @@ blockquote {
   *:last-child {
     margin-bottom: 0;
   }
+}
+
+blockquote {
+  border-left: 3px solid var(--text);
+}
+
+aside {
+  border-left: 3px solid var(--accent);
 }
 
 h1,
