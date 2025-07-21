@@ -5,9 +5,12 @@ use chrono::NaiveDate;
 use maud::{html, Markup, PreEscaped, Render};
 use tokio::sync::RwLockReadGuard;
 
-use crate::state::{
-    markdown_to_html, names::TagName, Node, Page, Post, SinglePostMetadata, ThreadEntryMetadata,
-    ThreadMetadata,
+use crate::{
+    state::{
+        markdown_to_html, names::TagName, Node, Page, Post, SinglePostMetadata,
+        ThreadEntryMetadata, ThreadMetadata,
+    },
+    templates::partials,
 };
 
 pub struct PostRef<'a> {
@@ -23,26 +26,17 @@ impl Render for PostRef<'_> {
                 html_summary: _,
                 html_content,
             } => html! {
-                article {
-                    div class="title" {
-                        (PreEscaped(post.html_title()))
-                    }
+                main {
+                    article {
+                        (partials::page_title(PreEscaped(post.html_title())))
+                        (partials::post_frontmatter(
+                            post.date_posted(),
+                            post.date_updated(self.show_drafts),
+                            post.tags()
+                        ))
 
-                    ul class="frontmatter" {
-                        li {
-                            time datetime=(post.date_posted()) {
-                                (post.date_posted().format("%d %B %Y"))
-                            }
-                        }
-                        @for tag in post.tags() {
-                            li {
-                                a href=(format!("/tagged/{}", tag)) {
-                                    code { (tag) }
-                                }
-                            }
-                        }
+                        (PreEscaped(&html_content))
                     }
-                    (PreEscaped(&html_content))
                 }
             },
             post @ Post::Thread {
@@ -61,31 +55,23 @@ impl Render for PostRef<'_> {
                 }
 
                 html! {
-                    article {
-                        div class="title" {
-                            (PreEscaped(post.html_title()))
-                        }
+                    main {
+                        (partials::page_title(PreEscaped(post.html_title())))
+                        (partials::post_frontmatter(
+                            post.date_posted(),
+                            post.date_updated(self.show_drafts),
+                            post.tags()
+                        ))
 
                         @for (i, entry) in filtered_entries.iter().enumerate() {
                             @if i > 0 {
                                 hr;
+                                (partials::post_entry_frontmatter(
+                                    entry.metadata.date,
+                                    entry.metadata.updated,
+                                ))
                             }
-                            ul class="frontmatter" {
-                                li {
-                                    time datetime=(entry.metadata.date) {
-                                        (entry.metadata.date.format("%d %B %Y"))
-                                    }
-                                }
-                                @if i == 0 {
-                                    @for tag in post.tags() {
-                                        li {
-                                            a href=(format!("/tagged/{}", tag)) {
-                                                code { (tag) }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
+
                             (PreEscaped(&entry.html_content))
                         }
                     }
@@ -113,7 +99,7 @@ impl Render for PageRef<'_> {
 
         html! {
             @if let Some(title) = page.html_title() {
-                div class="title" { (PreEscaped(title)) }
+                (partials::page_title(PreEscaped(title)))
             }
             (PreEscaped(&page.html_content))
         }
@@ -217,51 +203,32 @@ impl Render for PostsRef<'_> {
         html! {
             main {
                 hgroup {
-                    div class="title" { "Posts" }
-                    (PreEscaped(&markdown_to_html(
+                    (partials::page_title(html! { "Posts" }))
+
+                    p {
                         "This is a list of posts in reverse chronological order by their \
                         original date of posting. If a post has been updated since then, its \
                         most recent update date is listed in its frontmatter, but if you want to \
-                        see the updates broken out separately, you should visit \
-                        [chrono](/chrono)."
-                    )))
+                        see the updates broken out separately, you should visit "
+                        a href="/chrono" { "chrono" }
+                        "."
+                    }
                 }
 
                 @for (path, post) in posts.iter().rev() {
                     hr;
 
                     section {
-                        hgroup {
-                            h2 {
-                                ({
-                                    let title = post.md_title();
-                                    let md = format!("[{}](/posts/{})", title, path);
-                                    PreEscaped(markdown_to_html(&md))
-                                })
-                            }
-                            ul class="frontmatter" {
-                                li {
-                                    time datetime=(post.date_posted()) {
-                                        (post.date_posted().format("%d %B %Y"))
-                                    }
-                                }
-                                @if post.date_posted() != post.date_updated(self.show_drafts) {
-                                    li {
-                                        "updated "
-                                        time datetime=(post.date_updated(self.show_drafts)) {
-                                            (post.date_updated(self.show_drafts).format("%d %B %Y"))
-                                        }
-                                    }
-                                }
-                                @for tag in post.tags() {
-                                    li {
-                                        a href=(format!("/tagged/{}", tag)) {
-                                            code { (tag) }
-                                        }
-                                    }
-                                }
+                        h2 {
+                            a href=(format!("/posts/{path}")) {
+                                (PreEscaped(post.html_title()))
                             }
                         }
+                        (partials::post_frontmatter(
+                            post.date_posted(),
+                            post.date_updated(self.show_drafts),
+                            post.tags()
+                        ))
                         (PreEscaped(post.summary()))
                         p {
                             a href=(format!("/posts/{}", path)) {
@@ -327,11 +294,7 @@ impl Render for RecentPostsRef<'_> {
                         a href=(format!("/posts/{}", path)) {
                             (PreEscaped(post.html_title()))
                         }
-                        " ("
-                        time datetime=(post.date_posted()) {
-                            (post.date_posted().format("%d %B %Y"))
-                        }
-                        ")"
+                        " (" (partials::date(post.date_posted())) ")"
                     }
                 }
             }
@@ -359,10 +322,19 @@ enum ChronoEntry<'a> {
 }
 
 impl ChronoEntry<'_> {
-    fn date_updated(&self) -> NaiveDate {
+    fn date_posted(&self) -> NaiveDate {
         match self {
             ChronoEntry::Single { metadata, .. } => metadata.date,
             ChronoEntry::ThreadEntry { entry_meta, .. } => entry_meta.date,
+        }
+    }
+
+    fn date_updated(&self) -> NaiveDate {
+        match self {
+            ChronoEntry::Single { metadata, .. } => metadata.updated.unwrap_or(metadata.date),
+            ChronoEntry::ThreadEntry { entry_meta, .. } => {
+                entry_meta.updated.unwrap_or(entry_meta.date)
+            }
         }
     }
 
@@ -371,6 +343,15 @@ impl ChronoEntry<'_> {
             ChronoEntry::Single { metadata, .. } => metadata.md_title.as_str(),
             ChronoEntry::ThreadEntry { thread_meta, .. } => thread_meta.md_title.as_str(),
         }
+    }
+
+    fn html_title(&self) -> String {
+        let html = markdown_to_html(self.md_title());
+
+        html.strip_prefix("<p>")
+            .and_then(|title| title.strip_suffix("</p>\n"))
+            .map(|stripped| stripped.to_string())
+            .unwrap_or(html)
     }
 
     fn path(&self) -> &Utf8Path {
@@ -442,41 +423,31 @@ impl Render for ChronoRef<'_> {
         html! {
             main {
                 hgroup {
-                    div class="title" { "Chrono" }
-                    (PreEscaped(&markdown_to_html(
+                    (partials::page_title(html! { "Chrono" }))
+
+                    p {
                         "This is a list of all updates made to posts in reverse chronological \
-                        order, including the initial post and its additions and edits since. \
-                        If you only want to see entire posts, you should visit [posts](/posts)."
-                    )))
+                        order, including the initial post and its additions and edits since. If \
+                        you only want to see entire posts, you should visit "
+                        a href="/posts" { "posts" }
+                        "."
+                    }
                 }
 
                 @for entry in entries.iter().rev() {
                     hr;
 
                     section {
-                        hgroup {
-                            h2 {
-                                ({
-                                    let title = entry.md_title();
-                                    let md = format!("[{}](/posts/{})", title, entry.path());
-                                    PreEscaped(markdown_to_html(&md))
-                                })
-                            }
-                            ul class="frontmatter" {
-                                li {
-                                    time datetime=(entry.date_updated()) {
-                                        (entry.date_updated().format("%d %B %Y"))
-                                    }
-                                }
-                                @for tag in entry.tags() {
-                                    li {
-                                        a href=(format!("/tagged/{}", tag)) {
-                                            code { (tag) }
-                                        }
-                                    }
-                                }
+                        h2 {
+                            a href=(format!("/posts/{}", entry.path())) {
+                                (PreEscaped(entry.html_title()))
                             }
                         }
+                        (partials::post_frontmatter(
+                            entry.date_posted(),
+                            entry.date_updated(),
+                            entry.tags()
+                        ))
                         (PreEscaped(entry.summary()))
                         p {
                             a href=(format!("/posts/{}", entry.path())) {
@@ -544,10 +515,12 @@ impl Render for TagsRef<'_> {
 
         html! {
             main {
-                div class="title" { "Tags" }
-                (PreEscaped(&markdown_to_html(
-                    "This is a list of all tags found on [posts](/posts)."
-                )))
+                (partials::page_title(html! { "Tags" }))
+                p {
+                    "This is a list of all tags found on "
+                    a href="/posts" { "posts" }
+                    "."
+                }
 
                 hr;
 
@@ -622,53 +595,32 @@ impl Render for TaggedRef<'_> {
         html! {
             main {
                 hgroup {
-                    div class="title" { "Posts Tagged " code { (self.tag) } }
-                    (PreEscaped(&markdown_to_html(
-                        format!(
-                            "This is a list of all posts tagged with `{}`, in reverse \
-                            chronological order by their original date of posting. If a post has \
-                            been updated since then, its most recent update date is listed in its \
-                            frontmatter.",
-                            self.tag
-                        ).as_str()
-                    )))
+                    (partials::page_title(html! {
+                        "Posts Tagged " code { (self.tag) }
+                    }))
+                    p {
+                        "This is a list of all posts tagged with "
+                        code { (self.tag) }
+                        ", in reverse chronological order by their original date of posting. If a \
+                        post has been updated since then, its most recent update date is listed \
+                        in its frontmatter."
+                    }
                 }
 
                 @for (path, post) in posts.iter().rev() {
                     hr;
 
                     section {
-                        hgroup {
-                            h2 {
-                                ({
-                                    let title = post.md_title();
-                                    let md = format!("[{}](/posts/{})", title, path);
-                                    PreEscaped(markdown_to_html(&md))
-                                })
-                            }
-                            ul class="frontmatter" {
-                                li {
-                                    time datetime=(post.date_posted()) {
-                                        (post.date_posted().format("%d %B %Y"))
-                                    }
-                                }
-                                @if post.date_posted() != post.date_updated(self.show_drafts) {
-                                    li {
-                                        "updated "
-                                        time datetime=(post.date_updated(self.show_drafts)) {
-                                            (post.date_updated(self.show_drafts).format("%d %B %Y"))
-                                        }
-                                    }
-                                }
-                                @for tag in post.tags() {
-                                    li {
-                                        a href=(format!("/tagged/{}", tag)) {
-                                            code { (tag) }
-                                        }
-                                    }
-                                }
+                        h2 {
+                            a href=(format!("/posts/{path}")) {
+                                (PreEscaped(post.html_title()))
                             }
                         }
+                        (partials::post_frontmatter(
+                            post.date_posted(),
+                            post.date_updated(self.show_drafts),
+                            post.tags()
+                        ))
                         (PreEscaped(post.summary()))
                         p {
                             a href=(format!("/posts/{}", path)) {

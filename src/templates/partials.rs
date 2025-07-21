@@ -1,9 +1,10 @@
 use std::{env, option_env};
 
+use chrono::NaiveDate;
 use maddie_wtf::build_info;
 use maud::{html, Markup};
 
-use crate::state::Theme;
+use crate::state::{names::TagName, Theme};
 
 pub async fn head(title: Option<&str>, theme: Theme) -> Markup {
     let theme_header = theme.theme_header();
@@ -67,6 +68,90 @@ pub async fn footer() -> Markup {
                     }
                 }
                 li { a href=(url) { "source" } }
+            }
+        }
+    }
+}
+
+pub fn page_title(html_title: Markup) -> Markup {
+    html! {
+        div class="title" {
+            (html_title)
+        }
+    }
+}
+
+pub fn post_frontmatter<'a>(
+    date_posted: NaiveDate,
+    date_updated: NaiveDate,
+    tags: impl Iterator<Item = &'a TagName>,
+) -> Markup {
+    html! {
+        ul class="frontmatter" {
+            li {
+                (self::date_posted(date_posted))
+            }
+
+            @if date_posted != date_updated {
+                li {
+                    (self::date_updated(date_updated))
+                }
+            }
+
+            (tag_list(tags))
+        }
+    }
+}
+
+pub fn post_entry_frontmatter(date_posted: NaiveDate, date_updated: Option<NaiveDate>) -> Markup {
+    html! {
+        ul class="frontmatter" {
+            li {
+                (self::date_posted(date_posted))
+            }
+
+            @if let Some(updated) = date_updated {
+                @if date_posted != updated {
+                    li {
+                        (self::date_updated(updated))
+                    }
+                }
+            }
+        }
+    }
+}
+
+fn date_posted(date: NaiveDate) -> Markup {
+    html! {
+        em {
+            "Posted " (self::date(date))
+        }
+    }
+}
+
+fn date_updated(date: NaiveDate) -> Markup {
+    html! {
+        em {
+            "Updated " (self::date(date))
+        }
+    }
+}
+
+pub fn date(date: NaiveDate) -> Markup {
+    html! {
+        time datetime=(date) {
+            (date.format("%d %B %Y"))
+        }
+    }
+}
+
+fn tag_list<'a>(tags: impl Iterator<Item = &'a TagName>) -> Markup {
+    html! {
+        @for tag in tags {
+            li {
+                a href=(format!("/tagged/{}", tag)) {
+                    code { (tag) }
+                }
             }
         }
     }
