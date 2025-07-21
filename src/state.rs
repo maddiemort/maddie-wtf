@@ -337,7 +337,7 @@ impl Content {
                 Ok(())
             }
         } else if metadata.is_dir() {
-            warn!(%relative_path, "skipping directory");
+            warn!(%relative_path, "ignoring directory");
             Ok(())
         } else {
             warn!(%relative_path, "skipping entry that is neither a file nor directory");
