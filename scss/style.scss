@@ -215,7 +215,7 @@ hr {
   margin: 1rem 0;
 }
 
-:not(footer) > ul {
+:not(footer, header nav) > ul {
   list-style: "⬩" outside;
   padding-inline-start: 1rem;
 
