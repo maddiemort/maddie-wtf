@@ -203,8 +203,9 @@ hr {
   background-color: var(--rule);
 }
 
-h1.sitetitle {
+.sitetitle {
   font-size: 2.35rem;
+  font-weight: 600;
 }
 
 :not(footer) > ul {
@@ -241,6 +242,7 @@ header.siteheader {
   align-items: center;
   justify-content: space-between;
   text-align: center;
+  padding-top: 1rem;
 }
 
 @media screen and (max-width: 48rem) {
@@ -248,7 +250,7 @@ header.siteheader {
     flex-direction: column;
   }
 
-  h1.sitetitle {
+  .sitetitle {
     margin-bottom: 0px;
   }
 }
