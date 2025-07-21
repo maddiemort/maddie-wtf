@@ -400,12 +400,26 @@ impl Content {
         match metadata {
             Either::Left(metadata) => {
                 let rest = rest.trim();
-                let raw_summary = rest
-                    .split("\n\n")
-                    .filter(|par| !par.starts_with('#'))
-                    .take(2)
-                    .collect::<Vec<_>>()
-                    .join("\n\n");
+
+                let mut raw_summary_paras = Vec::new();
+                for (i, par) in rest.split("\n\n").enumerate() {
+                    if par.starts_with('#') && i == 0 {
+                        // This is a heading, but it's the first one, so just skip it
+                        continue;
+                    } else if par.starts_with('#') || par == "<!-- cut -->" {
+                        // We've hit the next heading or a manual summary cut, so the summary
+                        // should stop
+                        break;
+                    } else {
+                        raw_summary_paras.push(par);
+                    }
+
+                    if raw_summary_paras.len() == 2 {
+                        break;
+                    }
+                }
+
+                let raw_summary = raw_summary_paras.join("\n\n");
                 let html_summary = markdown_to_html(&raw_summary);
 
                 let html_content = markdown_to_html(rest);
@@ -422,14 +436,30 @@ impl Content {
             Either::Right((thread_meta, entry_metas, mut entry_raw_content)) => {
                 entry_raw_content.push(rest.trim());
 
-                let raw_summary = entry_raw_content
+                let mut raw_summary_paras = Vec::new();
+                for (i, par) in entry_raw_content
                     .first()
                     .expect("threaded post has at least one entry")
                     .split("\n\n")
-                    .filter(|par| !par.starts_with('#'))
-                    .take(2)
-                    .collect::<Vec<_>>()
-                    .join("\n\n");
+                    .enumerate()
+                {
+                    if par.starts_with('#') && i == 0 {
+                        // This is a heading, but it's the first one, so just skip it
+                        continue;
+                    } else if par.starts_with('#') || par == "<!-- cut -->" {
+                        // We've hit the next heading or a manual summary cut, so the summary
+                        // should stop
+                        break;
+                    } else {
+                        raw_summary_paras.push(par);
+                    }
+
+                    if raw_summary_paras.len() == 2 {
+                        break;
+                    }
+                }
+
+                let raw_summary = raw_summary_paras.join("\n\n");
                 let html_summary = markdown_to_html(&raw_summary);
 
                 let entries = entry_metas
