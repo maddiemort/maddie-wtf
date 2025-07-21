@@ -47,7 +47,11 @@ lazy_static! {
         plugins.render.codefence_syntax_highlighter = Some(&*SYNTECT_ADAPTER);
         plugins
     };
-    static ref COMRAK_OPTIONS: ComrakOptions = ComrakOptions::default();
+    static ref COMRAK_OPTIONS: ComrakOptions = {
+        let mut options = ComrakOptions::default();
+        options.render.unsafe_ = true;
+        options
+    };
 }
 
 fn markdown_to_html(md_input: &str) -> String {
