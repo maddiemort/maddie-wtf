@@ -207,13 +207,17 @@ h1.sitetitle {
   font-size: 2.35rem;
 }
 
-main ul {
+:not(footer) > ul {
   list-style: "⬩" outside;
   padding-inline-start: 1rem;
 
   li {
     margin: 0.25rem 0;
   }
+}
+
+ul ul {
+  margin: 0;
 }
 
 header.siteheader,
@@ -224,6 +228,7 @@ ul.frontmatter {
 
   li {
     display: inline;
+    margin: 0;
   }
 
   li+li::before {
