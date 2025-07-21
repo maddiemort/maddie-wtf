@@ -202,17 +202,15 @@ impl Render for PostsRef<'_> {
 
         html! {
             main {
-                hgroup {
-                    (partials::page_title(html! { "Posts" }))
+                (partials::page_title(html! { "Posts" }))
 
-                    p {
-                        "This is a list of posts in reverse chronological order by their \
-                        original date of posting. If a post has been updated since then, its \
-                        most recent update date is listed in its frontmatter, but if you want to \
-                        see the updates broken out separately, you should visit "
-                        a href="/chrono" { "chrono" }
-                        "."
-                    }
+                p {
+                    "This is a list of posts in reverse chronological order by their original \
+                    date of posting. If a post has been updated since then, its most recent update \
+                    date is listed in its frontmatter, but if you want to see the updates broken \
+                    out separately, you should visit "
+                    a href="/chrono" { "chrono" }
+                    "."
                 }
 
                 @for (path, post) in posts.iter().rev() {
@@ -422,16 +420,14 @@ impl Render for ChronoRef<'_> {
 
         html! {
             main {
-                hgroup {
-                    (partials::page_title(html! { "Chrono" }))
+                (partials::page_title(html! { "Chrono" }))
 
-                    p {
-                        "This is a list of all updates made to posts in reverse chronological \
-                        order, including the initial post and its additions and edits since. If \
-                        you only want to see entire posts, you should visit "
-                        a href="/posts" { "posts" }
-                        "."
-                    }
+                p {
+                    "This is a list of all updates made to posts in reverse chronological \
+                    order, including the initial post and its additions and edits since. If \
+                    you only want to see entire posts, you should visit "
+                    a href="/posts" { "posts" }
+                    "."
                 }
 
                 @for entry in entries.iter().rev() {
@@ -594,17 +590,16 @@ impl Render for TaggedRef<'_> {
 
         html! {
             main {
-                hgroup {
-                    (partials::page_title(html! {
-                        "Posts Tagged " code { (self.tag) }
-                    }))
-                    p {
-                        "This is a list of all posts tagged with "
-                        code { (self.tag) }
-                        ", in reverse chronological order by their original date of posting. If a \
-                        post has been updated since then, its most recent update date is listed \
-                        in its frontmatter."
-                    }
+                (partials::page_title(html! {
+                    "Posts Tagged " code { (self.tag) }
+                }))
+
+                p {
+                    "This is a list of all posts tagged with "
+                    code { (self.tag) }
+                    ", in reverse chronological order by their original date of posting. If a \
+                    post has been updated since then, its most recent update date is listed \
+                    in its frontmatter."
                 }
 
                 @for (path, post) in posts.iter().rev() {
