@@ -27,7 +27,9 @@ pub async fn page(page: PageRef<'_>, theme: Theme) -> Markup {
         page.metadata.title.as_deref(),
         theme,
         html! {
-            (page)
+            main {
+                (page)
+            }
         },
     )
     .await
