@@ -110,18 +110,19 @@ pub async fn rss_feed(rss_feed: RssFeedRef<'_>) -> Markup {
     // It's not HTML, it's XML, but we should be fine as long as we're careful.
     html! {
         (PreEscaped("<?xml version=\"1.0\" ?>"))
-        rss version="2.0";
-        channel {
-            title { "maddie, wtf?!" }
-            link { "https://maddie.wtf" }
-            description { "Madeleine Mortensen" }
-            image {
-                url {
-                    "https://maddie.wtf/static/favicon.svg"
-                }
+        rss version="2.0" {
+            channel {
+                title { "maddie, wtf?!" }
                 link { "https://maddie.wtf" }
+                description { "Madeleine Mortensen" }
+                image {
+                    url {
+                        "https://maddie.wtf/static/favicon.svg"
+                    }
+                    link { "https://maddie.wtf" }
+                }
+                (rss_feed)
             }
-            (rss_feed)
         }
     }
 }
