@@ -3,7 +3,7 @@ use maud::{html, Markup, PreEscaped};
 use crate::{
     state::{
         render::{
-            ChronoRef, EntryRef, PageRef, PostRef, PostsRef, RecentPostsRef, RssFeedRef, TaggedRef,
+            ChronoRef, EntryRef, PageRef, PostRef, PostsRef, RecentPubsRef, RssFeedRef, TaggedRef,
             TagsRef,
         },
         Theme,
@@ -11,7 +11,7 @@ use crate::{
     templates::wrappers,
 };
 
-pub async fn index(index: PageRef<'_>, recent_posts: RecentPostsRef<'_>, theme: Theme) -> Markup {
+pub async fn index(index: PageRef<'_>, recent_posts: RecentPubsRef<'_>, theme: Theme) -> Markup {
     wrappers::base(
         index.metadata.title.as_deref(),
         theme,

@@ -297,8 +297,8 @@ impl<'a> NodesRef<'a> {
         }
     }
 
-    pub fn into_recent_posts(self) -> RecentPostsRef<'a> {
-        RecentPostsRef {
+    pub fn into_recent_pubs(self) -> RecentPubsRef<'a> {
+        RecentPubsRef {
             guard: self.guard,
             show_drafts: self.show_drafts,
         }
@@ -416,59 +416,90 @@ impl Render for PostsRef<'_> {
     }
 }
 
-pub struct RecentPostsRef<'a> {
+pub struct RecentPubsRef<'a> {
     pub(super) guard: RwLockReadGuard<'a, HashMap<Utf8PathBuf, Node>>,
     pub(super) show_drafts: bool,
 }
 
-impl Render for RecentPostsRef<'_> {
+impl Render for RecentPubsRef<'_> {
     fn render(&self) -> Markup {
         let nodes = self.guard.deref();
-        let mut posts = nodes
+        let mut entries = nodes
             .iter()
-            .filter_map(|(path, node)| {
-                if let Node::Post(post) = node {
-                    Some((path.as_path(), post))
-                } else {
-                    None
-                }
-            })
-            .filter(|(_, post)| {
-                if !self.show_drafts {
-                    // If we're not showing drafts, then filter out the following things:
-                    //
-                    // - Posts that are only a single entry that's a draft
-                    // - Posts that are a thread where we can't display any of the entries (i.e. the
-                    //   first entry is a draft, which implies the following are also drafts)
-                    let is_draft = match post {
-                        Post::Single { metadata, .. } => metadata.draft,
-                        Post::Thread { entries, .. } => {
-                            entries
-                                .first()
-                                .expect("a post cannot have no entries")
-                                .metadata
-                                .draft
+            .flat_map(|(path, node)| {
+                let mut to_render = vec![];
+                match node {
+                    Node::Post(Post::Single {
+                        metadata,
+                        html_summary,
+                        ..
+                    }) => {
+                        if self.show_drafts || !metadata.draft {
+                            to_render.push(ChronoEntry::Single {
+                                path,
+                                metadata,
+                                html_summary: html_summary.as_str(),
+                            });
                         }
-                    };
+                    }
+                    Node::Post(Post::Thread {
+                        metadata, entries, ..
+                    }) => {
+                        let mut entries_to_render = vec![];
 
-                    !is_draft
-                } else {
-                    true
+                        let mut found_draft = false;
+                        for (i, entry) in entries.iter().enumerate() {
+                            found_draft |= entry.metadata.draft;
+
+                            if self.show_drafts || !found_draft {
+                                entries_to_render.push(ChronoEntry::ThreadEntry {
+                                    post_path: path,
+                                    index: i,
+                                    display_as_entry: true,
+                                    thread_meta: metadata,
+                                    entry_meta: &entry.metadata,
+                                    html_summary: entry.html_summary.as_str(),
+                                });
+                            }
+                        }
+
+                        if found_draft && entries_to_render.len() == 1 {
+                            // Special case! There was more than one entry, but only the first one
+                            // was not a draft. That means that if we display this first entry *as*
+                            // an entry, we'll confuse readers (and tip them off that another entry
+                            // might be coming). We shouldn't link to the entry page, we should
+                            // just link to the main post.
+
+                            let ChronoEntry::ThreadEntry {
+                                ref mut display_as_entry,
+                                ..
+                            } = entries_to_render[0]
+                            else {
+                                unreachable!();
+                            };
+
+                            *display_as_entry = false;
+                        }
+
+                        to_render.extend(entries_to_render);
+                    }
+                    _ => {}
                 }
+                to_render
             })
-            .collect::<Vec<_>>();
-        posts.sort_by_key(|(_, post)| post.date_posted());
+            .collect::<Vec<ChronoEntry>>();
+        entries.sort_by_key(|chrono_entry| chrono_entry.date_updated());
 
         html! {
-            h1 { "Recent Posts" }
+            h1 { "Recent Publications" }
 
             ul {
-                @for (path, post) in posts.iter().rev().take(5) {
+                @for entry in entries.iter().rev().take(5) {
                     li {
-                        a href=(format!("/posts/{}", path)) {
-                            (PreEscaped(post.html_title()))
+                        a href=(entry.path()) {
+                            (PreEscaped(entry.html_title()))
                         }
-                        " (" (partials::date(post.date_posted())) ")"
+                        " (" (partials::date(entry.date_posted())) ")"
                     }
                 }
             }

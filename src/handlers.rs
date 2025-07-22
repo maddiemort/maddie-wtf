@@ -26,7 +26,7 @@ pub async fn index(
     let recent_posts = content
         .nodes(settings.show_drafts())
         .await
-        .into_recent_posts();
+        .into_recent_pubs();
     if let Some(index) = content.page("_index").await {
         Ok(pages::index(index, recent_posts, theme).await)
     } else {
