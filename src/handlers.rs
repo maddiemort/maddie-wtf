@@ -157,7 +157,7 @@ pub async fn stylesheet(request: Request<Body>) -> Result<Response<String>, Hand
 }
 
 pub async fn not_found(request: Request<Body>) -> HandlerError {
-    warn!(route = %request.uri(), "request received for unknown URI");
+    debug!(route = %request.uri(), "request received for unknown URI");
     HandlerError::NotFound
 }
 
