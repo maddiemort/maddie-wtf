@@ -229,10 +229,13 @@ ul ul {
 }
 
 header.siteheader,
-ul.frontmatter {
+ul.frontmatter,
+ul.endmatter {
   display: flex;
+  flex-wrap: wrap;
   list-style: none;
   padding-inline-start: 0px;
+  row-gap: 0.25rem;
 
   li {
     display: inline;

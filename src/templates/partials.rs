@@ -98,8 +98,6 @@ pub fn post_frontmatter<'a>(
     date_posted: NaiveDate,
     date_updated: NaiveDate,
     tags: impl Iterator<Item = &'a TagName>,
-    lobsters: Option<&Url>,
-    hacker_news: Option<&Url>,
 ) -> Markup {
     html! {
         ul class="frontmatter" {
@@ -113,22 +111,6 @@ pub fn post_frontmatter<'a>(
                 }
             }
 
-            @if let Some(lobsters) = lobsters {
-                li {
-                    a href=(lobsters) {
-                        "Lobsters"
-                    }
-                }
-            }
-
-            @if let Some(hacker_news) = hacker_news {
-                li {
-                    a href=(hacker_news) {
-                        "Hacker News"
-                    }
-                }
-            }
-
             (tag_list(tags))
         }
     }
@@ -139,8 +121,6 @@ pub fn post_entry_frontmatter<'a>(
     date_posted: NaiveDate,
     date_updated: Option<NaiveDate>,
     tags: impl Iterator<Item = &'a TagName>,
-    lobsters: Option<&Url>,
-    hacker_news: Option<&Url>,
 ) -> Markup {
     fn ul_optional_id(index: Option<usize>, body: Markup) -> Markup {
         html! {
@@ -171,25 +151,33 @@ pub fn post_entry_frontmatter<'a>(
                 }
             }
 
-            @if let Some(lobsters) = lobsters {
-                li {
-                    a href=(lobsters) {
-                        "Lobsters"
-                    }
-                }
-            }
-
-            @if let Some(hacker_news) = hacker_news {
-                li {
-                    a href=(hacker_news) {
-                        "Hacker News"
-                    }
-                }
-            }
-
             (tag_list(tags))
         },
     )
+}
+
+pub fn post_endmatter(lobsters: Option<&Url>, hacker_news: Option<&Url>) -> Markup {
+    html! {
+        @if lobsters.is_some() || hacker_news.is_some() {
+            ul class="endmatter" {
+                @if let Some(lobsters) = lobsters {
+                    li {
+                        a href=(lobsters) {
+                            "Lobsters"
+                        }
+                    }
+                }
+
+                @if let Some(hacker_news) = hacker_news {
+                    li {
+                        a href=(hacker_news) {
+                            "Hacker News"
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 fn date_posted(date: NaiveDate) -> Markup {

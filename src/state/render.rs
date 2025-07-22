@@ -67,14 +67,15 @@ impl Render for PostRef<'_> {
                             post.date_posted(),
                             post.date_updated(self.show_drafts),
                             post.tags(),
-                            post.lobsters(),
-                            post.hacker_news(),
                         ))
 
                         @if let Some(toc) = html_toc {
                             (partials::table_of_contents(PreEscaped(toc.clone())))
                         }
+
                         (PreEscaped(&html_content))
+
+                        (partials::post_endmatter(post.lobsters(), post.hacker_news()))
                     }
                 }
             },
@@ -110,8 +111,6 @@ impl Render for PostRef<'_> {
                             post.date_posted(),
                             post.date_updated(self.show_drafts),
                             post.tags(),
-                            post.lobsters(),
-                            post.hacker_news(),
                         ))
 
                         @for (i, entry) in filtered_entries.iter().enumerate() {
@@ -139,8 +138,6 @@ impl Render for PostRef<'_> {
                                     entry.metadata.date,
                                     entry.metadata.updated,
                                     post.tags(),
-                                    entry.metadata.lobsters.as_ref(),
-                                    entry.metadata.hacker_news.as_ref(),
                                 ))
                             }
 
@@ -154,10 +151,30 @@ impl Render for PostRef<'_> {
                                 (partials::table_of_contents(PreEscaped(toc.clone())))
                             }
 
-
                             hr;
 
                             (PreEscaped(&entry.html_content))
+
+                            @if i == 0 {
+                                @if post.lobsters().is_some() || post.hacker_news().is_some() {
+                                    hr;
+                                }
+
+                                (partials::post_endmatter(
+                                    post.lobsters(),
+                                    post.hacker_news(),
+                                ))
+                            } @else {
+                                @if entry.metadata.lobsters.is_some()
+                                    || entry.metadata.hacker_news.is_some() {
+                                    hr;
+                                }
+
+                                (partials::post_endmatter(
+                                    entry.metadata.lobsters.as_ref(),
+                                    entry.metadata.hacker_news.as_ref(),
+                                ))
+                            }
                         }
                     }
                 }
@@ -218,8 +235,6 @@ impl Render for EntryRef<'_> {
                         self.metadata.date,
                         self.metadata.updated.unwrap_or(self.metadata.date),
                         self.thread_metadata().tags.iter(),
-                        self.metadata.lobsters.as_ref(),
-                        self.metadata.hacker_news.as_ref(),
                     ))
 
                     aside {
@@ -240,6 +255,11 @@ impl Render for EntryRef<'_> {
                     (PreEscaped(&self.html_content))
 
                     hr;
+
+                    (partials::post_endmatter(
+                        self.metadata.lobsters.as_ref(),
+                        self.metadata.hacker_news.as_ref(),
+                    ))
 
                     aside {
                         em {
@@ -410,8 +430,6 @@ impl Render for PostsRef<'_> {
                             post.date_posted(),
                             post.date_updated(self.show_drafts),
                             post.tags(),
-                            None,
-                            None,
                         ))
                         (PreEscaped(post.summary()))
                         p {
@@ -724,8 +742,6 @@ impl Render for ChronoRef<'_> {
                             entry.date_posted(),
                             entry.date_updated(),
                             entry.tags(),
-                            None,
-                            None,
                         ))
                         (PreEscaped(entry.summary()))
                         p {
@@ -996,8 +1012,6 @@ impl Render for TaggedRef<'_> {
                             post.date_posted(),
                             post.date_updated(self.show_drafts),
                             post.tags(),
-                            None,
-                            None,
                         ))
                         (PreEscaped(post.summary()))
                         p {
