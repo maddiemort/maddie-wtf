@@ -29,6 +29,7 @@ use tokio::{
 };
 use tower_livereload::Reloader;
 use tracing::{debug, error, info, instrument, span, warn, Level};
+use url::Url;
 
 use crate::{
     state::{
@@ -418,6 +419,8 @@ impl Content {
             tags: first_frontmatter.tags,
             date,
             updated: first_frontmatter.updated,
+            lobsters: first_frontmatter.lobsters,
+            hacker_news: first_frontmatter.hacker_news,
         });
 
         while let Some((last_content, (this_raw_frontmatter, new_rest))) = rest
@@ -743,12 +746,14 @@ pub enum LoadContentError {
 }
 
 #[derive(Clone, Debug)]
+#[expect(clippy::large_enum_variant)]
 pub enum Node {
     Post(Post),
     Page(Page),
 }
 
 #[derive(Clone, Debug)]
+#[expect(clippy::large_enum_variant)]
 pub enum Post {
     Single {
         metadata: SinglePostMetadata,
@@ -877,6 +882,30 @@ impl Post {
             Post::Thread { entries, .. } => entries.iter().all(|entry| entry.metadata.draft),
         }
     }
+
+    pub fn lobsters(&self) -> Option<&Url> {
+        match self {
+            Post::Single { metadata, .. } => metadata.lobsters.as_ref(),
+            Post::Thread { entries, .. } => entries
+                .first()
+                .expect("threaded post has at least one entry")
+                .metadata
+                .lobsters
+                .as_ref(),
+        }
+    }
+
+    pub fn hacker_news(&self) -> Option<&Url> {
+        match self {
+            Post::Single { metadata, .. } => metadata.hacker_news.as_ref(),
+            Post::Thread { entries, .. } => entries
+                .first()
+                .expect("threaded post has at least one entry")
+                .metadata
+                .hacker_news
+                .as_ref(),
+        }
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -925,6 +954,8 @@ pub struct PostFrontmatter {
     #[serde(default)]
     tags: Vec<TagName>,
     updated: Option<NaiveDate>,
+    lobsters: Option<Url>,
+    hacker_news: Option<Url>,
 }
 
 #[derive(Clone, Debug)]
@@ -934,6 +965,8 @@ pub struct SinglePostMetadata {
     pub tags: Vec<TagName>,
     pub date: NaiveDate,
     pub updated: Option<NaiveDate>,
+    pub lobsters: Option<Url>,
+    pub hacker_news: Option<Url>,
 }
 
 impl SinglePostMetadata {
@@ -944,6 +977,8 @@ impl SinglePostMetadata {
             tags,
             date,
             updated,
+            lobsters,
+            hacker_news,
         } = self;
         (
             ThreadMetadata { md_title, tags },
@@ -952,6 +987,8 @@ impl SinglePostMetadata {
                 draft,
                 date,
                 updated,
+                lobsters,
+                hacker_news,
             },
         )
     }
@@ -972,6 +1009,8 @@ pub struct ThreadEntryMetadata {
     pub draft: bool,
     pub date: NaiveDate,
     pub updated: Option<NaiveDate>,
+    pub lobsters: Option<Url>,
+    pub hacker_news: Option<Url>,
 }
 
 #[derive(Clone, Debug)]

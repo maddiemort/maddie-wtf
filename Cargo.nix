@@ -25,7 +25,7 @@ args@{ release ? true
 ,
 }:
 let
-  nixifiedLockHash = "0ba7d352156f5c577ba99254d0cb984415e5224fafce0309aac93651eb868720";
+  nixifiedLockHash = "dbf4268fde04b1fcd1dda0a8ac98fc9160af9f74050be2e3cfcee4a4eb7ff621";
   workspaceSrc = if args.workspaceSrc == null then ./. else args.workspaceSrc;
   currentLockHash = builtins.hashFile "sha256" (workspaceSrc + /Cargo.lock);
   lockHashIgnored =
@@ -1847,6 +1847,7 @@ else
         tower_livereload = (rustPackages."registry+https://github.com/rust-lang/crates.io-index".tower-livereload."0.9.6" { inherit profileName; }).out;
         tracing = (rustPackages."registry+https://github.com/rust-lang/crates.io-index".tracing."0.1.41" { inherit profileName; }).out;
         tracing_subscriber = (rustPackages."registry+https://github.com/rust-lang/crates.io-index".tracing-subscriber."0.3.19" { inherit profileName; }).out;
+        url = (rustPackages."registry+https://github.com/rust-lang/crates.io-index".url."2.5.4" { inherit profileName; }).out;
         uuid = (rustPackages."registry+https://github.com/rust-lang/crates.io-index".uuid."1.16.0" { inherit profileName; }).out;
       };
       buildDependencies = {
@@ -3599,12 +3600,14 @@ else
       src = fetchCratesIo { inherit name version; sha256 = "32f8b686cadd1473f4bd0117a5d28d36b1ade384ea9b5069a1c40aefed7fda60"; };
       features = builtins.concatLists [
         [ "default" ]
+        [ "serde" ]
         [ "std" ]
       ];
       dependencies = {
         form_urlencoded = (rustPackages."registry+https://github.com/rust-lang/crates.io-index".form_urlencoded."1.2.1" { inherit profileName; }).out;
         idna = (rustPackages."registry+https://github.com/rust-lang/crates.io-index".idna."1.0.3" { inherit profileName; }).out;
         percent_encoding = (rustPackages."registry+https://github.com/rust-lang/crates.io-index".percent-encoding."2.3.1" { inherit profileName; }).out;
+        serde = (rustPackages."registry+https://github.com/rust-lang/crates.io-index".serde."1.0.219" { inherit profileName; }).out;
       };
     });
 
