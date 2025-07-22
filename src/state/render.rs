@@ -756,14 +756,16 @@ impl Render for RssFeedRef<'_> {
 
         html! {
             @for entry in entries.iter().rev() {
-                title {
-                    (entry.html_title())
-                }
-                link {
-                    (format!("https://maddie.wtf{}", entry.path()))
-                }
-                description {
-                    (entry.summary())
+                item {
+                    title {
+                        (entry.html_title())
+                    }
+                    link {
+                        (format!("https://maddie.wtf{}", entry.path()))
+                    }
+                    description {
+                        (entry.summary())
+                    }
                 }
             }
         }
