@@ -6,6 +6,7 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use thiserror::Error;
+use tracing::debug;
 
 use crate::{state::Theme, templates::pages};
 
@@ -48,6 +49,7 @@ pub async fn render_error(
     let mut response = next.run(request).await;
 
     if let Some(handler_error) = response.extensions_mut().remove::<HandlerError>() {
+        debug!(error = %handler_error, "rendering error");
         match handler_error {
             HandlerError::NotFound => {
                 let mut response = pages::not_found(theme).await.into_response();

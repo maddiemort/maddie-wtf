@@ -5,7 +5,7 @@ use axum::{
 };
 use maud::Markup;
 use tap::TryConv;
-use tracing::{debug, warn};
+use tracing::warn;
 
 use crate::{
     errors::HandlerError,
@@ -21,8 +21,6 @@ pub async fn index(
     State(settings): State<Settings>,
     request: Request<Body>,
 ) -> Result<Markup, HandlerError> {
-    debug!(route = %request.uri(), "handling request");
-
     let recent_posts = content
         .nodes(settings.show_drafts())
         .await
@@ -40,8 +38,6 @@ pub async fn page(
     Path(page): Path<String>,
     request: Request<Body>,
 ) -> Result<Markup, HandlerError> {
-    debug!(route = %request.uri(), "handling request");
-
     if let Some(page) = content.page(page).await {
         Ok(pages::page(page, theme).await)
     } else {
@@ -53,10 +49,8 @@ pub async fn posts(
     State(content): State<Content>,
     State(theme): State<Theme>,
     State(settings): State<Settings>,
-    request: Request<Body>,
+    _request: Request<Body>,
 ) -> Result<Markup, HandlerError> {
-    debug!(route = %request.uri(), "handling request");
-
     let posts = content.nodes(settings.show_drafts()).await.into_posts();
     Ok(pages::posts(posts, theme).await)
 }
@@ -68,8 +62,6 @@ pub async fn post(
     Path(post): Path<String>,
     request: Request<Body>,
 ) -> Result<Markup, HandlerError> {
-    debug!(route = %request.uri(), "handling request");
-
     if let Some(post) = content.post(post, settings.show_drafts()).await {
         Ok(pages::post(post, theme).await)
     } else {
@@ -84,8 +76,6 @@ pub async fn entry(
     Path((post, index)): Path<(String, usize)>,
     request: Request<Body>,
 ) -> Result<Markup, HandlerError> {
-    debug!(route = %request.uri(), "handling request");
-
     if let Some(entry) = content
         .post(post, settings.show_drafts())
         .await
@@ -101,10 +91,8 @@ pub async fn chrono(
     State(content): State<Content>,
     State(theme): State<Theme>,
     State(settings): State<Settings>,
-    request: Request<Body>,
+    _request: Request<Body>,
 ) -> Result<Markup, HandlerError> {
-    debug!(route = %request.uri(), "handling request");
-
     let posts = content.nodes(settings.show_drafts()).await.into_chrono();
     Ok(pages::chrono(posts, theme).await)
 }
@@ -113,10 +101,8 @@ pub async fn tags(
     State(content): State<Content>,
     State(theme): State<Theme>,
     State(settings): State<Settings>,
-    request: Request<Body>,
+    _request: Request<Body>,
 ) -> Result<Markup, HandlerError> {
-    debug!(route = %request.uri(), "handling request");
-
     let posts = content.nodes(settings.show_drafts()).await.into_tags();
     Ok(pages::tags(posts, theme).await)
 }
@@ -126,10 +112,8 @@ pub async fn tagged(
     State(theme): State<Theme>,
     State(settings): State<Settings>,
     Path(tag): Path<String>,
-    request: Request<Body>,
+    _request: Request<Body>,
 ) -> Result<Markup, HandlerError> {
-    debug!(route = %request.uri(), "handling request");
-
     match tag.try_conv::<TagName>() {
         Ok(tag) => {
             if content.tag_exists(&tag).await {
@@ -147,9 +131,7 @@ pub async fn tagged(
     }
 }
 
-pub async fn stylesheet(request: Request<Body>) -> Result<Response<String>, HandlerError> {
-    debug!(route = %request.uri(), "handling request");
-
+pub async fn stylesheet(_request: Request<Body>) -> Result<Response<String>, HandlerError> {
     Response::builder()
         .header(header::CONTENT_TYPE, "text/css")
         .body(STYLESHEET.to_owned())
@@ -159,10 +141,8 @@ pub async fn stylesheet(request: Request<Body>) -> Result<Response<String>, Hand
 pub async fn rss_feed(
     State(content): State<Content>,
     State(settings): State<Settings>,
-    request: Request<Body>,
+    _request: Request<Body>,
 ) -> Result<Response<String>, HandlerError> {
-    debug!(route = %request.uri(), "handling request");
-
     let feed = content.nodes(settings.show_drafts()).await.into_rss_feed();
     let feed_output = pages::rss_feed(feed).await;
 
@@ -172,8 +152,7 @@ pub async fn rss_feed(
         .map_err(|_| HandlerError::InternalError)
 }
 
-pub async fn not_found(request: Request<Body>) -> HandlerError {
-    debug!(route = %request.uri(), "request received for unknown URI");
+pub async fn not_found(_request: Request<Body>) -> HandlerError {
     HandlerError::NotFound
 }
 

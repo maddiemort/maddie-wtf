@@ -1,14 +1,25 @@
-use std::net::SocketAddr;
+use std::{
+    net::{IpAddr, Ipv4Addr, SocketAddr},
+    str::FromStr,
+};
 
-use axum::{body::Body, http::Request, middleware, routing::get, Router};
+use axum::{
+    extract::Request,
+    middleware::{self, Next},
+    response::Response,
+    routing::get,
+    Router,
+};
 use axum_tracing_opentelemetry::middleware::OtelAxumLayer;
 use camino::Utf8PathBuf;
 use clap::Parser;
+use maddie_wtf::metric;
+use metrics_exporter_prometheus::PrometheusBuilder;
 use tokio::net::TcpListener;
-use tower::ServiceExt;
 use tower_http::services::ServeDir;
 use tower_livereload::LiveReloadLayer;
-use tracing::{debug, error, info};
+use tracing::{error, error_span, field, info, Instrument, Span};
+use url::Url;
 
 use crate::state::Config;
 
@@ -33,6 +44,39 @@ pub struct Args {
 
     #[arg(long, env = "THEMES_PATH")]
     themes_path: Utf8PathBuf,
+
+    #[arg(long, env = "ENVIRONMENT")]
+    environment: Environment,
+
+    #[arg(long, env = "METRICS_PORT")]
+    metrics_port: Option<u16>,
+}
+
+#[derive(Copy, Clone, Debug)]
+enum Environment {
+    Development,
+    Production,
+}
+
+impl FromStr for Environment {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_lowercase().as_str() {
+            "dev" | "development" => Ok(Environment::Development),
+            "prod" | "production" => Ok(Environment::Production),
+            _ => Err(format!("`{}` is not a valid environment name", s)),
+        }
+    }
+}
+
+impl std::fmt::Display for Environment {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Environment::Development => write!(f, "development"),
+            Environment::Production => write!(f, "production"),
+        }
+    }
 }
 
 #[tokio::main]
@@ -54,6 +98,20 @@ async fn main() {
             return;
         }
     };
+
+    if let Some(port) = args.metrics_port {
+        let environment = args.environment.to_string();
+
+        PrometheusBuilder::new()
+            .with_http_listener(SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), port))
+            .add_global_label("environment", &environment)
+            .install()
+            .expect("should be able to install Prometheus metrics recorder and exporter");
+
+        info!(%port, %environment, "installed Prometheus metrics recorder and exporter");
+    }
+
+    metrics::counter!(*metric::REQUESTS_RECEIVED).absolute(0);
 
     let config = Config::from(args);
 
@@ -79,13 +137,7 @@ async fn main() {
         .route("/style.css", get(handlers::stylesheet))
         .route("/rss.xml", get(handlers::rss_feed));
 
-    let app = app.nest_service(
-        "/static",
-        ServeDir::new(&config.static_path).map_request(|req: Request<Body>| {
-            debug!(route = %req.uri(), under = %"/static", "handling nested request");
-            req
-        }),
-    );
+    let app = app.nest_service("/static", ServeDir::new(&config.static_path));
 
     #[cfg(debug_assertions)]
     let app = app.route("/break", get(handlers::internal_error));
@@ -110,6 +162,47 @@ async fn main() {
         .layer(middleware::from_fn_with_state(
             state.clone(),
             errors::render_error,
+        ))
+        .layer(middleware::from_fn(
+            async |request: Request, next: Next| -> Response {
+                async {
+                    let route = request.uri().to_string();
+                    Span::current().record("route", route.clone());
+
+                    if let Some(referer) = request
+                        .headers()
+                        .get("Referer")
+                        .and_then(|val| val.to_str().ok())
+                        .and_then(|str| str.parse::<Url>().ok())
+                    {
+                        if let Some(referer) = referer.host_str() {
+                            if referer != "maddie.wtf" {
+                                Span::current().record("referer", referer);
+                            }
+                        }
+                    }
+
+                    info!("handling request");
+
+                    let response = next.run(request).await;
+                    let status_code = response.status();
+
+                    metrics::counter!(
+                        *metric::REQUESTS_RECEIVED,
+                        "route" => route,
+                        "status_code" => status_code.as_str().to_owned(),
+                    )
+                    .increment(1);
+
+                    response
+                }
+                .instrument(error_span!(
+                    "request",
+                    route = field::Empty,
+                    referer = field::Empty
+                ))
+                .await
+            },
         ))
         .with_state(state);
 

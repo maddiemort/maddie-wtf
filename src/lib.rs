@@ -6,6 +6,7 @@ use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt, Env
 mod result_option_exts;
 
 pub mod build_info;
+pub mod metric;
 
 pub use result_option_exts::{OptionExt, ResultExt};
 
