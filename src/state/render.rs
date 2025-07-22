@@ -764,7 +764,7 @@ impl Render for RssFeedRef<'_> {
                         (format!("https://maddie.wtf{}", entry.path()))
                     }
                     description {
-                        (entry.summary())
+                        (entry.summary().replace('\n', " "))
                     }
                 }
             }
