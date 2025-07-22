@@ -758,7 +758,7 @@ impl Render for RssFeedRef<'_> {
             @for entry in entries.iter().rev() {
                 item {
                     title {
-                        (entry.html_title())
+                        (entry.md_title())
                     }
                     link {
                         (format!("https://maddie.wtf{}", entry.path()))
