@@ -58,16 +58,18 @@ pub async fn footer() -> Markup {
     html! {
         footer class="sitefooter" {
             ul {
-                @if let Some(hash) = short_hash {
-                    li {
-                        code { (hash) }
-                    }
-                }
+                li { a href="/rss.xml" { "feed" } }
                 li {
                     code {
                         (env!("CARGO_PKG_NAME"))
-                        " v"
+                    }
+                    " "
+                    code {
+                        "v"
                         (env!("CARGO_PKG_VERSION"))
+                    }
+                    @if let Some(hash) = short_hash {
+                        code { (hash) }
                     }
                 }
                 li { a href=(url) { "source" } }
