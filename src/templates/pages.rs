@@ -116,11 +116,9 @@ pub async fn rss_feed(rss_feed: RssFeedRef<'_>) -> Markup {
                 link { "https://maddie.wtf" }
                 description { "Madeleine Mortensen" }
                 image {
-                    url {
-                        "https://maddie.wtf/static/favicon.svg"
-                    }
+                    title { "maddie, wtf?!" }
                     link { "https://maddie.wtf" }
-                    title { "Favicon" }
+                    url { "https://maddie.wtf/static/favicon.svg" }
                 }
                 (rss_feed)
             }
