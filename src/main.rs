@@ -72,6 +72,7 @@ async fn main() {
         .route("/", get(handlers::index))
         .route("/posts", get(handlers::posts))
         .route("/posts/:post", get(handlers::post))
+        .route("/posts/:post/entry/:index", get(handlers::entry))
         .route("/chrono", get(handlers::chrono))
         .route("/tags", get(handlers::tags))
         .route("/tagged/:tag", get(handlers::tagged))

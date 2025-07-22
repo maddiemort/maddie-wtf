@@ -2,7 +2,9 @@ use maud::{html, Markup};
 
 use crate::{
     state::{
-        render::{ChronoRef, PageRef, PostRef, PostsRef, RecentPostsRef, TaggedRef, TagsRef},
+        render::{
+            ChronoRef, EntryRef, PageRef, PostRef, PostsRef, RecentPostsRef, TaggedRef, TagsRef,
+        },
         Theme,
     },
     templates::wrappers,
@@ -41,6 +43,19 @@ pub async fn post(post: PostRef<'_>, theme: Theme) -> Markup {
         theme,
         html! {
             (post)
+        },
+    )
+    .await
+}
+
+pub async fn entry(entry: EntryRef<'_>, theme: Theme) -> Markup {
+    wrappers::base(
+        Some(&entry.thread_metadata().md_title),
+        theme,
+        html! {
+            main {
+                (entry)
+            }
         },
     )
     .await

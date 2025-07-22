@@ -7,7 +7,7 @@ use tokio::sync::RwLockReadGuard;
 
 use crate::{
     state::{
-        markdown_to_html, names::TagName, Node, Page, Post, SinglePostMetadata,
+        markdown_to_html, names::TagName, Node, Page, Post, SinglePostMetadata, ThreadEntry,
         ThreadEntryMetadata, ThreadMetadata,
     },
     templates::partials,
@@ -15,7 +15,39 @@ use crate::{
 
 pub struct PostRef<'a> {
     pub(super) guard: RwLockReadGuard<'a, Post>,
+    pub(super) path: Utf8PathBuf,
     pub(super) show_drafts: bool,
+}
+
+impl<'a> PostRef<'a> {
+    pub fn into_entry(self, index: usize, show_drafts: bool) -> Option<EntryRef<'a>> {
+        if let Post::Thread { ref entries, .. } = *self {
+            if index < entries.len() {
+                // Ok, we know the entry exists. There are a few more checks to make, though.
+                if !show_drafts && entries[index].metadata.draft {
+                    // Simple: if the entry is a draft and we're not showing drafts, don't show it.
+                    None
+                } else if !show_drafts && entries.iter().filter(|e| !e.metadata.draft).count() == 1
+                {
+                    // If there's only one non-draft entry (regardless of whether there are more!),
+                    // we shouldn't allow this entry to be displayed as an entry (because it will
+                    // confuse readers, and it will leak that there might be more entries coming in
+                    // the future). Just pretend it doesn't exist.
+                    None
+                } else {
+                    Some(EntryRef {
+                        guard: self.guard,
+                        post_path: self.path,
+                        index,
+                    })
+                }
+            } else {
+                None
+            }
+        } else {
+            None
+        }
+    }
 }
 
 impl Render for PostRef<'_> {
@@ -105,6 +137,76 @@ impl Deref for PostRef<'_> {
 
     fn deref(&self) -> &Self::Target {
         self.guard.deref()
+    }
+}
+
+pub struct EntryRef<'a> {
+    pub(super) guard: RwLockReadGuard<'a, Post>,
+    pub(super) post_path: Utf8PathBuf,
+    pub(super) index: usize,
+}
+
+impl EntryRef<'_> {
+    pub fn thread_metadata(&self) -> &ThreadMetadata {
+        let Post::Thread { metadata, .. } = self.guard.deref() else {
+            unreachable!()
+        };
+        metadata
+    }
+}
+
+impl Render for EntryRef<'_> {
+    fn render(&self) -> Markup {
+        html! {
+            main {
+                article {
+                    (partials::page_title(PreEscaped(self.thread_metadata().html_title())))
+                    (partials::post_frontmatter(
+                        self.metadata.date,
+                        self.metadata.updated.unwrap_or(self.metadata.date),
+                        self.thread_metadata().tags.iter(),
+                    ))
+
+                    aside {
+                        em {
+                            "You're reading a single entry in a longer post. The entire post is available "
+                            a href=(format!("/posts/{}", self.post_path)) {
+                                "here"
+                            }
+                            "."
+                        }
+                    }
+
+                    @if let Some(ref toc) = self.html_toc {
+                        (partials::table_of_contents(PreEscaped(toc.clone())))
+                    }
+                    (PreEscaped(&self.html_content))
+
+                    hr;
+
+                    aside {
+                        em {
+                            "You're reading a single entry in a longer post. The entire post is available "
+                            a href=(format!("/posts/{}", self.post_path)) {
+                                "here"
+                            }
+                            "."
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+impl Deref for EntryRef<'_> {
+    type Target = ThreadEntry;
+
+    fn deref(&self) -> &Self::Target {
+        let Post::Thread { entries, .. } = self.guard.deref() else {
+            unreachable!()
+        };
+        &entries[self.index]
     }
 }
 
@@ -225,9 +327,8 @@ impl Render for PostsRef<'_> {
 
                 p {
                     "This is a list of posts in reverse chronological order by their original \
-                    date of posting. If a post has been updated since then, its most recent update \
-                    date is listed in its frontmatter, but if you want to see the updates broken \
-                    out separately, you should visit "
+                    date of posting. If a post contains multiple entries, they'll all be shown on \
+                    the linked page, but you can view each separately at "
                     a href="/chrono" { "chrono" }
                     "."
                 }
@@ -331,7 +432,9 @@ enum ChronoEntry<'a> {
         html_summary: &'a str,
     },
     ThreadEntry {
-        path: &'a Utf8Path,
+        post_path: &'a Utf8Path,
+        index: usize,
+        display_as_entry: bool,
         thread_meta: &'a ThreadMetadata,
         entry_meta: &'a ThreadEntryMetadata,
         html_summary: &'a str,
@@ -371,9 +474,23 @@ impl ChronoEntry<'_> {
             .unwrap_or(html)
     }
 
-    fn path(&self) -> &Utf8Path {
+    fn path(&self) -> String {
         match self {
-            ChronoEntry::Single { path, .. } | ChronoEntry::ThreadEntry { path, .. } => path,
+            ChronoEntry::Single { path, .. } => {
+                format!("/posts/{}", path)
+            }
+            ChronoEntry::ThreadEntry {
+                post_path,
+                index,
+                display_as_entry,
+                ..
+            } => {
+                if *display_as_entry {
+                    format!("/posts/{}/entry/{}", post_path, index)
+                } else {
+                    format!("/posts/{}", post_path)
+                }
+            }
         }
     }
 
@@ -416,19 +533,43 @@ impl Render for ChronoRef<'_> {
                     Node::Post(Post::Thread {
                         metadata, entries, ..
                     }) => {
+                        let mut entries_to_render = vec![];
+
                         let mut found_draft = false;
-                        for entry in entries {
+                        for (i, entry) in entries.iter().enumerate() {
                             found_draft |= entry.metadata.draft;
 
                             if self.show_drafts || !found_draft {
-                                to_render.push(ChronoEntry::ThreadEntry {
-                                    path,
+                                entries_to_render.push(ChronoEntry::ThreadEntry {
+                                    post_path: path,
+                                    index: i,
+                                    display_as_entry: true,
                                     thread_meta: metadata,
                                     entry_meta: &entry.metadata,
                                     html_summary: entry.html_summary.as_str(),
                                 });
                             }
                         }
+
+                        if found_draft && entries_to_render.len() == 1 {
+                            // Special case! There was more than one entry, but only the first one
+                            // was not a draft. That means that if we display this first entry *as*
+                            // an entry, we'll confuse readers (and tip them off that another entry
+                            // might be coming). We shouldn't link to the entry page, we should
+                            // just link to the main post.
+
+                            let ChronoEntry::ThreadEntry {
+                                ref mut display_as_entry,
+                                ..
+                            } = entries_to_render[0]
+                            else {
+                                unreachable!();
+                            };
+
+                            *display_as_entry = false;
+                        }
+
+                        to_render.extend(entries_to_render);
                     }
                     _ => {}
                 }
@@ -442,9 +583,9 @@ impl Render for ChronoRef<'_> {
                 (partials::page_title(html! { "Chrono" }))
 
                 p {
-                    "This is a list of all updates made to posts in reverse chronological \
-                    order, including the initial post and its additions and edits since. If \
-                    you only want to see entire posts, you should visit "
+                    "This is a list of all individual entries in posts in reverse chronological \
+                    order, including the initial post and its additions since. If you only want \
+                    to see entire posts, you should visit "
                     a href="/posts" { "posts" }
                     "."
                 }
@@ -454,7 +595,7 @@ impl Render for ChronoRef<'_> {
 
                     section {
                         h2 {
-                            a href=(format!("/posts/{}", entry.path())) {
+                            a href=(entry.path()) {
                                 (PreEscaped(entry.html_title()))
                             }
                         }
@@ -465,7 +606,7 @@ impl Render for ChronoRef<'_> {
                         ))
                         (PreEscaped(entry.summary()))
                         p {
-                            a href=(format!("/posts/{}", entry.path())) {
+                            a href=(entry.path()) {
                                 "Read more"
                             }
                         }

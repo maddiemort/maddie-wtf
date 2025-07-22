@@ -669,6 +669,7 @@ impl Content {
         if let Ok(post_guard) = post_guard {
             Some(PostRef {
                 guard: post_guard,
+                path: path.as_ref().to_owned(),
                 show_drafts,
             })
         } else {
@@ -946,6 +947,17 @@ impl SinglePostMetadata {
 pub struct ThreadMetadata {
     pub md_title: String,
     pub tags: Vec<TagName>,
+}
+
+impl ThreadMetadata {
+    pub fn html_title(&self) -> String {
+        let html = markdown_to_html(&self.md_title);
+
+        html.strip_prefix("<p>")
+            .and_then(|title| title.strip_suffix("</p>\n"))
+            .map(|stripped| stripped.to_string())
+            .unwrap_or(html)
+    }
 }
 
 #[derive(Clone, Debug, Deserialize)]

@@ -77,6 +77,26 @@ pub async fn post(
     }
 }
 
+pub async fn entry(
+    State(content): State<Content>,
+    State(theme): State<Theme>,
+    State(settings): State<Settings>,
+    Path((post, index)): Path<(String, usize)>,
+    request: Request<Body>,
+) -> Result<Markup, HandlerError> {
+    debug!(route = %request.uri(), "handling request");
+
+    if let Some(entry) = content
+        .post(post, settings.show_drafts())
+        .await
+        .and_then(|p| p.into_entry(index, settings.show_drafts()))
+    {
+        Ok(pages::entry(entry, theme).await)
+    } else {
+        Err(not_found(request).await)
+    }
+}
+
 pub async fn chrono(
     State(content): State<Content>,
     State(theme): State<Theme>,
