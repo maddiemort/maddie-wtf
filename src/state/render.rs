@@ -791,6 +791,9 @@ impl Render for RssFeedRef<'_> {
                     title {
                         (PreEscaped(entry.md_title()))
                     }
+                    pubDate {
+                        (entry.date_posted().format("%a, %d %b %Y 00:00:00 +0000"))
+                    }
                     link {
                         (format!("https://maddie.wtf{}", entry.path()))
                     }
