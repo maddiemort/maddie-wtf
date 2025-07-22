@@ -61,7 +61,8 @@ impl Render for PostRef<'_> {
             } => html! {
                 main {
                     article {
-                        (partials::page_title(PreEscaped(post.html_title())))
+                        (partials::page_title(PreEscaped(post.html_title()), None))
+
                         (partials::post_frontmatter(
                             post.date_posted(),
                             post.date_updated(self.show_drafts),
@@ -90,38 +91,65 @@ impl Render for PostRef<'_> {
                     }
                 }
 
-                let combined_toc = filtered_entries
-                    .iter()
-                    .flat_map(|entry| entry.html_toc.clone())
-                    .collect::<Vec<_>>();
-
-                let html_toc = if combined_toc.is_empty() {
-                    None
-                } else {
-                    Some(combined_toc.join(""))
-                };
-
                 html! {
                     main {
-                        (partials::page_title(PreEscaped(post.html_title())))
+                        @let multiple_entries = filtered_entries.len() > 1;
+                        @let title_id = if multiple_entries {
+                            Some("entry-0")
+                        } else {
+                            None
+                        };
+
+                        (partials::page_title(PreEscaped(post.html_title()), title_id))
+
+                        hr;
+
                         (partials::post_frontmatter(
                             post.date_posted(),
                             post.date_updated(self.show_drafts),
                             post.tags()
                         ))
 
-                        @if let Some(toc) = html_toc.as_ref() {
-                            (partials::table_of_contents(PreEscaped(toc.clone())))
-                        }
-
                         @for (i, entry) in filtered_entries.iter().enumerate() {
+                            @let has_next = i + 1 < filtered_entries.len();
+                            @let has_prev = i > 0;
+
                             @if i > 0 {
                                 hr;
+
+                                @if let Some(entry_title) = entry.html_title() {
+                                    (partials::page_title(
+                                        PreEscaped(entry_title),
+                                        Some(&format!("entry-{i}"))
+                                    ))
+                                }
+
+                                @let index_for_id = if entry.metadata.md_title.is_none() {
+                                    Some(i)
+                                } else {
+                                    None
+                                };
+
                                 (partials::post_entry_frontmatter(
+                                    index_for_id,
                                     entry.metadata.date,
                                     entry.metadata.updated,
+                                    post.tags(),
                                 ))
                             }
+
+                            @if multiple_entries {
+                                (partials::entry_aside(i, &self.path, has_next, has_prev))
+                            }
+
+                            @if let Some(toc) = entry.html_toc.as_ref() {
+                                hr;
+
+                                (partials::table_of_contents(PreEscaped(toc.clone())))
+                            }
+
+
+                            hr;
 
                             (PreEscaped(&entry.html_content))
                         }
@@ -147,6 +175,22 @@ pub struct EntryRef<'a> {
 }
 
 impl EntryRef<'_> {
+    pub fn md_title(&self) -> &str {
+        self.metadata
+            .md_title
+            .as_deref()
+            .unwrap_or(self.thread_metadata().md_title.as_str())
+    }
+
+    pub fn html_title(&self) -> String {
+        let html = markdown_to_html(self.md_title());
+
+        html.strip_prefix("<p>")
+            .and_then(|title| title.strip_suffix("</p>\n"))
+            .map(|stripped| stripped.to_string())
+            .unwrap_or(html)
+    }
+
     pub fn thread_metadata(&self) -> &ThreadMetadata {
         let Post::Thread { metadata, .. } = self.guard.deref() else {
             unreachable!()
@@ -160,7 +204,10 @@ impl Render for EntryRef<'_> {
         html! {
             main {
                 article {
-                    (partials::page_title(PreEscaped(self.thread_metadata().html_title())))
+                    (partials::page_title(PreEscaped(self.html_title()), None))
+
+                    hr;
+
                     (partials::post_frontmatter(
                         self.metadata.date,
                         self.metadata.updated.unwrap_or(self.metadata.date),
@@ -176,6 +223,8 @@ impl Render for EntryRef<'_> {
                             "."
                         }
                     }
+
+                    hr;
 
                     @if let Some(ref toc) = self.html_toc {
                         (partials::table_of_contents(PreEscaped(toc.clone())))
@@ -220,7 +269,7 @@ impl Render for PageRef<'_> {
 
         html! {
             @if let Some(title) = page.html_title() {
-                (partials::page_title(PreEscaped(title)))
+                (partials::page_title(PreEscaped(title), None))
             }
             (PreEscaped(&page.html_content))
         }
@@ -323,7 +372,7 @@ impl Render for PostsRef<'_> {
 
         html! {
             main {
-                (partials::page_title(html! { "Posts" }))
+                (partials::page_title(html! { "Posts" }, None))
 
                 p {
                     "This is a list of posts in reverse chronological order by their original \
@@ -461,7 +510,14 @@ impl ChronoEntry<'_> {
     fn md_title(&self) -> &str {
         match self {
             ChronoEntry::Single { metadata, .. } => metadata.md_title.as_str(),
-            ChronoEntry::ThreadEntry { thread_meta, .. } => thread_meta.md_title.as_str(),
+            ChronoEntry::ThreadEntry {
+                thread_meta,
+                entry_meta,
+                ..
+            } => entry_meta
+                .md_title
+                .as_deref()
+                .unwrap_or(thread_meta.md_title.as_str()),
         }
     }
 
@@ -580,7 +636,7 @@ impl Render for ChronoRef<'_> {
 
         html! {
             main {
-                (partials::page_title(html! { "Chrono" }))
+                (partials::page_title(html! { "Chrono" }, None))
 
                 p {
                     "This is a list of all individual entries in posts in reverse chronological \
@@ -671,7 +727,7 @@ impl Render for TagsRef<'_> {
 
         html! {
             main {
-                (partials::page_title(html! { "Tags" }))
+                (partials::page_title(html! { "Tags" }, None))
                 p {
                     "This is a list of all tags found on "
                     a href="/posts" { "posts" }
@@ -752,7 +808,7 @@ impl Render for TaggedRef<'_> {
             main {
                 (partials::page_title(html! {
                     "Posts Tagged " code { (self.tag) }
-                }))
+                }, None))
 
                 p {
                     "This is a list of all posts tagged with "

@@ -887,6 +887,19 @@ pub struct ThreadEntry {
     html_content: String,
 }
 
+impl ThreadEntry {
+    pub fn html_title(&self) -> Option<String> {
+        self.metadata.md_title.as_ref().map(|md_title| {
+            let html = markdown_to_html(md_title);
+
+            html.strip_prefix("<p>")
+                .and_then(|title| title.strip_suffix("</p>\n"))
+                .map(|stripped| stripped.to_string())
+                .unwrap_or(html)
+        })
+    }
+}
+
 #[derive(Error, Debug)]
 pub enum LoadPostError {
     #[error("failed to read content: {0}")]
@@ -935,6 +948,7 @@ impl SinglePostMetadata {
         (
             ThreadMetadata { md_title, tags },
             ThreadEntryMetadata {
+                md_title: None,
                 draft,
                 date,
                 updated,
@@ -949,20 +963,11 @@ pub struct ThreadMetadata {
     pub tags: Vec<TagName>,
 }
 
-impl ThreadMetadata {
-    pub fn html_title(&self) -> String {
-        let html = markdown_to_html(&self.md_title);
-
-        html.strip_prefix("<p>")
-            .and_then(|title| title.strip_suffix("</p>\n"))
-            .map(|stripped| stripped.to_string())
-            .unwrap_or(html)
-    }
-}
-
 #[derive(Clone, Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct ThreadEntryMetadata {
+    #[serde(rename = "title")]
+    pub md_title: Option<String>,
     #[serde(default)]
     pub draft: bool,
     pub date: NaiveDate,

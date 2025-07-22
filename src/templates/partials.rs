@@ -1,5 +1,6 @@
 use std::{env, option_env};
 
+use camino::Utf8Path;
 use chrono::NaiveDate;
 use maddie_wtf::build_info;
 use maud::{html, Markup};
@@ -73,10 +74,16 @@ pub async fn footer() -> Markup {
     }
 }
 
-pub fn page_title(html_title: Markup) -> Markup {
+pub fn page_title(html_title: Markup, title_id: Option<&str>) -> Markup {
     html! {
-        h1 class="title" {
-            (html_title)
+        @if let Some(id) = title_id {
+            h1 class="title" id=(id) {
+                (html_title)
+            }
+        } @else {
+            h1 class="title" {
+                (html_title)
+            }
         }
     }
 }
@@ -103,9 +110,29 @@ pub fn post_frontmatter<'a>(
     }
 }
 
-pub fn post_entry_frontmatter(date_posted: NaiveDate, date_updated: Option<NaiveDate>) -> Markup {
-    html! {
-        ul class="frontmatter" {
+pub fn post_entry_frontmatter<'a>(
+    index: Option<usize>,
+    date_posted: NaiveDate,
+    date_updated: Option<NaiveDate>,
+    tags: impl Iterator<Item = &'a TagName>,
+) -> Markup {
+    fn ul_optional_id(index: Option<usize>, body: Markup) -> Markup {
+        html! {
+            @if let Some(index) = index {
+                ul id=(format!("entry-{index}")) class="frontmatter" {
+                    (body)
+                }
+            } @else {
+                ul class="frontmatter" {
+                    (body)
+                }
+            }
+        }
+    }
+
+    ul_optional_id(
+        index,
+        html! {
             li {
                 (self::date_posted(date_posted))
             }
@@ -117,8 +144,10 @@ pub fn post_entry_frontmatter(date_posted: NaiveDate, date_updated: Option<Naive
                     }
                 }
             }
-        }
-    }
+
+            (tag_list(tags))
+        },
+    )
 }
 
 fn date_posted(date: NaiveDate) -> Markup {
@@ -163,6 +192,47 @@ pub fn table_of_contents(toc_items: Markup) -> Markup {
             h2 { "Table of Contents" }
             ul id="toc-list" {
                 (toc_items)
+            }
+        }
+    }
+}
+
+pub fn entry_aside(index: usize, path: &Utf8Path, has_next: bool, has_prev: bool) -> Markup {
+    html! {
+        aside {
+            em {
+                "This post contains multiple entries. You can "
+                a href=(format!("/posts/{}/entry/{}", path, index)) {
+                    "view this entry on its own"
+                }
+
+                @if has_prev {
+                    @if has_next {
+                        ","
+                    } @else {
+                        " or"
+                    }
+
+                    " jump to the "
+                    a href=(format!("#entry-{}", index - 1)) {
+                        "previous entry"
+                    }
+                }
+
+                @if has_next {
+                    @if has_prev {
+                        ", or"
+                    } @else {
+                        " or"
+                    }
+
+                    " jump to the "
+                    a href=(format!("#entry-{}", index + 1)) {
+                        "next entry"
+                    }
+                }
+
+                "."
             }
         }
     }

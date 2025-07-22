@@ -50,7 +50,7 @@ pub async fn post(post: PostRef<'_>, theme: Theme) -> Markup {
 
 pub async fn entry(entry: EntryRef<'_>, theme: Theme) -> Markup {
     wrappers::base(
-        Some(&entry.thread_metadata().md_title),
+        Some(entry.md_title()),
         theme,
         html! {
             main {
