@@ -141,6 +141,9 @@ impl Config {
     pub async fn load_state(self, reloader: Reloader) -> Result<State, LoadStateError> {
         use LoadStateError::*;
 
+        #[cfg(not(debug_assertions))]
+        let _ = reloader;
+
         let theme_set = SyntectThemeSet::load_from_folder(self.themes_path)?;
         let theme = Theme::try_load(theme_set, "OneHalfLight", "OneHalfDark")?;
 
