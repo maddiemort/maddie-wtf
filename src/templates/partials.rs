@@ -69,6 +69,7 @@ pub async fn footer() -> Markup {
                         (env!("CARGO_PKG_VERSION"))
                     }
                     @if let Some(hash) = short_hash {
+                        " "
                         code { (hash) }
                     }
                 }
