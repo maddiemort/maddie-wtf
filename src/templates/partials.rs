@@ -24,6 +24,8 @@ pub async fn head(title: Option<&str>, theme: Theme) -> Markup {
             link rel="preload" href="/static/IBMPlexSans-SemiBold.woff2" as="font" type="font/woff2" crossorigin;
             link rel="preload" href="/static/IBMPlexSans-SemiBoldItalic.woff2" as="font" type="font/woff2" crossorigin;
 
+            link rel="alternate" type="application/rss+xml" href="/rss.xml" title="maddie, wtf?!";
+
             title {
                 (title.map_or("maddie, wtf?!".into(), |title| format!("{} | maddie, wtf?!", title)))
             }

@@ -311,6 +311,13 @@ impl<'a> NodesRef<'a> {
         }
     }
 
+    pub fn into_rss_feed(self) -> RssFeedRef<'a> {
+        RssFeedRef {
+            guard: self.guard,
+            show_drafts: self.show_drafts,
+        }
+    }
+
     pub fn into_tags(self) -> TagsRef<'a> {
         TagsRef {
             guard: self.guard,
@@ -667,6 +674,96 @@ impl Render for ChronoRef<'_> {
                             }
                         }
                     }
+                }
+            }
+        }
+    }
+}
+
+pub struct RssFeedRef<'a> {
+    pub(super) guard: RwLockReadGuard<'a, HashMap<Utf8PathBuf, Node>>,
+    pub(super) show_drafts: bool,
+}
+
+impl Render for RssFeedRef<'_> {
+    fn render(&self) -> Markup {
+        let nodes = self.guard.deref();
+        let mut entries = nodes
+            .iter()
+            .flat_map(|(path, node)| {
+                let mut to_render = vec![];
+                match node {
+                    Node::Post(Post::Single {
+                        metadata,
+                        html_summary,
+                        ..
+                    }) => {
+                        if self.show_drafts || !metadata.draft {
+                            to_render.push(ChronoEntry::Single {
+                                path,
+                                metadata,
+                                html_summary: html_summary.as_str(),
+                            });
+                        }
+                    }
+                    Node::Post(Post::Thread {
+                        metadata, entries, ..
+                    }) => {
+                        let mut entries_to_render = vec![];
+
+                        let mut found_draft = false;
+                        for (i, entry) in entries.iter().enumerate() {
+                            found_draft |= entry.metadata.draft;
+
+                            if self.show_drafts || !found_draft {
+                                entries_to_render.push(ChronoEntry::ThreadEntry {
+                                    post_path: path,
+                                    index: i,
+                                    display_as_entry: true,
+                                    thread_meta: metadata,
+                                    entry_meta: &entry.metadata,
+                                    html_summary: entry.html_summary.as_str(),
+                                });
+                            }
+                        }
+
+                        if found_draft && entries_to_render.len() == 1 {
+                            // Special case! There was more than one entry, but only the first one
+                            // was not a draft. That means that if we display this first entry *as*
+                            // an entry, we'll confuse readers (and tip them off that another entry
+                            // might be coming). We shouldn't link to the entry page, we should
+                            // just link to the main post.
+
+                            let ChronoEntry::ThreadEntry {
+                                ref mut display_as_entry,
+                                ..
+                            } = entries_to_render[0]
+                            else {
+                                unreachable!();
+                            };
+
+                            *display_as_entry = false;
+                        }
+
+                        to_render.extend(entries_to_render);
+                    }
+                    _ => {}
+                }
+                to_render
+            })
+            .collect::<Vec<ChronoEntry>>();
+        entries.sort_by_key(|chrono_entry| chrono_entry.date_updated());
+
+        html! {
+            @for entry in entries.iter().rev() {
+                title {
+                    (entry.html_title())
+                }
+                link {
+                    (format!("https://maddie.wtf{}", entry.path()))
+                }
+                description {
+                    (entry.summary())
                 }
             }
         }

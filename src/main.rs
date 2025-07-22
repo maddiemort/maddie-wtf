@@ -76,7 +76,8 @@ async fn main() {
         .route("/chrono", get(handlers::chrono))
         .route("/tags", get(handlers::tags))
         .route("/tagged/:tag", get(handlers::tagged))
-        .route("/style.css", get(handlers::stylesheet));
+        .route("/style.css", get(handlers::stylesheet))
+        .route("/rss.xml", get(handlers::rss_feed));
 
     let app = app.nest_service(
         "/static",

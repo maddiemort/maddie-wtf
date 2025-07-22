@@ -1,9 +1,10 @@
-use maud::{html, Markup};
+use maud::{html, Markup, PreEscaped};
 
 use crate::{
     state::{
         render::{
-            ChronoRef, EntryRef, PageRef, PostRef, PostsRef, RecentPostsRef, TaggedRef, TagsRef,
+            ChronoRef, EntryRef, PageRef, PostRef, PostsRef, RecentPostsRef, RssFeedRef, TaggedRef,
+            TagsRef,
         },
         Theme,
     },
@@ -103,6 +104,26 @@ pub async fn tagged(tagged: TaggedRef<'_>, theme: Theme) -> Markup {
         },
     )
     .await
+}
+
+pub async fn rss_feed(rss_feed: RssFeedRef<'_>) -> Markup {
+    // It's not HTML, it's XML, but we should be fine as long as we're careful.
+    html! {
+        (PreEscaped("<?xml version=\"1.0\" ?>"))
+        rss version="2.0";
+        channel {
+            title { "maddie, wtf?!" }
+            link { "https://maddie.wtf" }
+            description { "Madeleine Mortensen" }
+            image {
+                url {
+                    "https://maddie.wtf/static/favicon.svg"
+                }
+                link { "https://maddie.wtf" }
+            }
+            (rss_feed)
+        }
+    }
 }
 
 pub async fn not_found(theme: Theme) -> Markup {

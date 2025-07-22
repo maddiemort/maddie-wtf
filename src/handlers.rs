@@ -156,6 +156,22 @@ pub async fn stylesheet(request: Request<Body>) -> Result<Response<String>, Hand
         .map_err(|_| HandlerError::InternalError)
 }
 
+pub async fn rss_feed(
+    State(content): State<Content>,
+    State(settings): State<Settings>,
+    request: Request<Body>,
+) -> Result<Response<String>, HandlerError> {
+    debug!(route = %request.uri(), "handling request");
+
+    let feed = content.nodes(settings.show_drafts()).await.into_rss_feed();
+    let feed_output = pages::rss_feed(feed).await;
+
+    Response::builder()
+        .header(header::CONTENT_TYPE, "application/rss+xml")
+        .body(feed_output.into_string())
+        .map_err(|_| HandlerError::InternalError)
+}
+
 pub async fn not_found(request: Request<Body>) -> HandlerError {
     debug!(route = %request.uri(), "request received for unknown URI");
     HandlerError::NotFound
