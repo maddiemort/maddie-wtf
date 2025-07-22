@@ -120,6 +120,7 @@ pub async fn rss_feed(rss_feed: RssFeedRef<'_>) -> Markup {
                         "https://maddie.wtf/static/favicon.svg"
                     }
                     link { "https://maddie.wtf" }
+                    title { "Favicon" }
                 }
                 (rss_feed)
             }
