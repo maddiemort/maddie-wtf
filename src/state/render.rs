@@ -69,11 +69,20 @@ impl Render for PostRef<'_> {
                             post.tags(),
                         ))
 
+                        hr;
+
                         @if let Some(toc) = html_toc {
                             (partials::table_of_contents(PreEscaped(toc.clone())))
+
+                            hr;
                         }
 
                         (PreEscaped(&html_content))
+
+                        @if post.lobsters().is_some()
+                            || post.hacker_news().is_some() {
+                            hr;
+                        }
 
                         (partials::post_endmatter(post.lobsters(), post.hacker_news()))
                     }
@@ -104,8 +113,6 @@ impl Render for PostRef<'_> {
                         };
 
                         (partials::page_title(PreEscaped(post.html_title()), title_id))
-
-                        hr;
 
                         (partials::post_frontmatter(
                             post.date_posted(),
@@ -229,8 +236,6 @@ impl Render for EntryRef<'_> {
                 article {
                     (partials::page_title(PreEscaped(self.html_title()), None))
 
-                    hr;
-
                     (partials::post_frontmatter(
                         self.metadata.date,
                         self.metadata.updated.unwrap_or(self.metadata.date),
@@ -251,7 +256,10 @@ impl Render for EntryRef<'_> {
 
                     @if let Some(ref toc) = self.html_toc {
                         (partials::table_of_contents(PreEscaped(toc.clone())))
+
+                        hr;
                     }
+
                     (PreEscaped(&self.html_content))
 
                     hr;
