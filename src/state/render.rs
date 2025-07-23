@@ -598,6 +598,23 @@ impl ChronoEntry<'_> {
         }
     }
 
+    fn rss_guid(&self) -> String {
+        // RSS GUIDs are a little weird. We're going to pretend that any posts that are a single
+        // entry are the first entry in a thread, because (1) the post might become a thread entry
+        // in the future if another entry is published, (2) we want the GUID to remain stable even
+        // if the post is converted into an entry, (3) RSS GUIDs don't have to be valid URLs
+        // (especially if we send them with `isPermaLink="false"`), and (4) RSS GUIDs don't have to
+        // be UUIDs, just strings that are "globally unique".
+        match self {
+            ChronoEntry::Single { path, .. } => format!("/posts/{}/entry/0", path),
+            ChronoEntry::ThreadEntry {
+                post_path, index, ..
+            } => {
+                format!("/posts/{}/entry/{}", post_path, index)
+            }
+        }
+    }
+
     fn summary(&self) -> &str {
         match self {
             ChronoEntry::Single { html_summary, .. }
@@ -808,6 +825,9 @@ impl Render for RssFeedRef<'_> {
                     }
                     link {
                         (format!("https://maddie.wtf{}", entry.path()))
+                    }
+                    guid isPermaLink="false" {
+                        (entry.rss_guid())
                     }
                     description {
                         (entry.summary().replace('\n', " "))
