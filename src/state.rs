@@ -91,8 +91,10 @@ impl HeadingAdapter for TocTagger {
 
         write!(
             output,
-            r#"<!-- TOC marker --><h{} id="{}">"#,
-            heading.level, slug,
+            "<!-- TOC marker --><h{level} id=\"{slug}\"><a href=\"#{slug}\" \
+             class=\"heading-anchor h{level}-anchor\">",
+            slug = slug,
+            level = heading.level,
         )
     }
 
@@ -101,7 +103,7 @@ impl HeadingAdapter for TocTagger {
         output: &mut dyn io::Write,
         heading: &comrak::adapters::HeadingMeta,
     ) -> io::Result<()> {
-        write!(output, "</h{}>", heading.level)
+        write!(output, "</a></h{}>", heading.level)
     }
 }
 
@@ -598,13 +600,25 @@ impl Content {
             let Some(open_tag_end) = html_content[level_idx..].find('>') else {
                 continue;
             };
-            let Some(close_tag_start) = html_content[level_idx + open_tag_end..].find("</h") else {
+            let Some(a_open_start) = html_content[level_idx + open_tag_end..].find("<a") else {
+                continue;
+            };
+            let Some(a_open_end) =
+                html_content[level_idx + open_tag_end + a_open_start..].find('>')
+            else {
+                continue;
+            };
+            let Some(a_close_start) =
+                html_content[level_idx + open_tag_end + a_open_start + a_open_end..].find("</a")
+            else {
                 continue;
             };
 
+            let name_start = level_idx + open_tag_end + a_open_start + a_open_end + 1;
+            let name_end = name_start + a_close_start - 1;
+
             let id = &html_content[id_start..(id_start + len_to_close_quote)];
-            let name = &html_content
-                [level_idx + open_tag_end + 1..level_idx + open_tag_end + close_tag_start];
+            let name = &html_content[name_start..name_end];
 
             while toc_level < level {
                 toc = format!("{toc}<ul>");
