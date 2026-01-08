@@ -6,6 +6,7 @@ use axum::{
 use maud::Markup;
 use tap::TryConv;
 use tracing::warn;
+use www::errors::Render;
 
 use crate::{
     errors::HandlerError,
@@ -20,7 +21,7 @@ pub async fn index(
     State(theme): State<Theme>,
     State(settings): State<Settings>,
     request: Request<Body>,
-) -> Result<Markup, HandlerError> {
+) -> Result<Markup, Render<HandlerError>> {
     let recent_posts = content
         .nodes(settings.show_drafts())
         .await
@@ -37,7 +38,7 @@ pub async fn page(
     State(theme): State<Theme>,
     Path(page): Path<String>,
     request: Request<Body>,
-) -> Result<Markup, HandlerError> {
+) -> Result<Markup, Render<HandlerError>> {
     if let Some(page) = content.page(page).await {
         Ok(pages::page(page, theme).await)
     } else {
@@ -50,7 +51,7 @@ pub async fn posts(
     State(theme): State<Theme>,
     State(settings): State<Settings>,
     _request: Request<Body>,
-) -> Result<Markup, HandlerError> {
+) -> Result<Markup, Render<HandlerError>> {
     let posts = content.nodes(settings.show_drafts()).await.into_posts();
     Ok(pages::posts(posts, theme).await)
 }
@@ -61,7 +62,7 @@ pub async fn post(
     State(settings): State<Settings>,
     Path(post): Path<String>,
     request: Request<Body>,
-) -> Result<Markup, HandlerError> {
+) -> Result<Markup, Render<HandlerError>> {
     if let Some(post) = content.post(post, settings.show_drafts()).await {
         Ok(pages::post(post, theme).await)
     } else {
@@ -75,7 +76,7 @@ pub async fn entry(
     State(settings): State<Settings>,
     Path((post, index)): Path<(String, usize)>,
     request: Request<Body>,
-) -> Result<Markup, HandlerError> {
+) -> Result<Markup, Render<HandlerError>> {
     if let Some(entry) = content
         .post(post, settings.show_drafts())
         .await
@@ -92,7 +93,7 @@ pub async fn chrono(
     State(theme): State<Theme>,
     State(settings): State<Settings>,
     _request: Request<Body>,
-) -> Result<Markup, HandlerError> {
+) -> Result<Markup, Render<HandlerError>> {
     let posts = content.nodes(settings.show_drafts()).await.into_chrono();
     Ok(pages::chrono(posts, theme).await)
 }
@@ -102,7 +103,7 @@ pub async fn tags(
     State(theme): State<Theme>,
     State(settings): State<Settings>,
     _request: Request<Body>,
-) -> Result<Markup, HandlerError> {
+) -> Result<Markup, Render<HandlerError>> {
     let posts = content.nodes(settings.show_drafts()).await.into_tags();
     Ok(pages::tags(posts, theme).await)
 }
@@ -113,7 +114,7 @@ pub async fn tagged(
     State(settings): State<Settings>,
     Path(tag): Path<String>,
     _request: Request<Body>,
-) -> Result<Markup, HandlerError> {
+) -> Result<Markup, Render<HandlerError>> {
     match tag.try_conv::<TagName>() {
         Ok(tag) => {
             if content.tag_exists(&tag).await {
@@ -121,43 +122,43 @@ pub async fn tagged(
                 Ok(pages::tagged(posts, theme).await)
             } else {
                 warn!(%tag, "requested tag doesn't exist");
-                Err(HandlerError::NotFound)
+                Err(HandlerError::NotFound.into())
             }
         }
         Err(error) => {
             warn!(%error, "requested tag is invalid");
-            Err(HandlerError::NotFound)
+            Err(HandlerError::NotFound.into())
         }
     }
 }
 
-pub async fn stylesheet(_request: Request<Body>) -> Result<Response<String>, HandlerError> {
+pub async fn stylesheet(_request: Request<Body>) -> Result<Response<String>, Render<HandlerError>> {
     Response::builder()
         .header(header::CONTENT_TYPE, "text/css")
         .body(STYLESHEET.to_owned())
-        .map_err(|_| HandlerError::InternalError)
+        .map_err(|_| HandlerError::InternalError.into())
 }
 
 pub async fn rss_feed(
     State(content): State<Content>,
     State(settings): State<Settings>,
     _request: Request<Body>,
-) -> Result<Response<String>, HandlerError> {
+) -> Result<Response<String>, Render<HandlerError>> {
     let feed = content.nodes(settings.show_drafts()).await.into_rss_feed();
     let feed_output = pages::rss_feed(feed).await;
 
     Response::builder()
         .header(header::CONTENT_TYPE, "application/rss+xml")
         .body(feed_output.into_string())
-        .map_err(|_| HandlerError::InternalError)
+        .map_err(|_| HandlerError::InternalError.into())
 }
 
-pub async fn not_found(_request: Request<Body>) -> HandlerError {
-    HandlerError::NotFound
+pub async fn not_found(_request: Request<Body>) -> Render<HandlerError> {
+    HandlerError::NotFound.into()
 }
 
 #[cfg(debug_assertions)]
-pub async fn internal_error(request: Request<Body>) -> HandlerError {
+pub async fn internal_error(request: Request<Body>) -> Render<HandlerError> {
     warn!(route = %request.uri(), "internal error page explicitly requested");
-    HandlerError::InternalError
+    HandlerError::InternalError.into()
 }

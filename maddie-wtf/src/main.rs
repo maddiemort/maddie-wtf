@@ -17,7 +17,7 @@ use tracing::{error, error_span, field, info, Instrument, Span};
 use url::Url;
 use www::config::Environment;
 
-use crate::state::Config;
+use crate::{errors::HandlerError, state::Config};
 
 mod build_info;
 mod errors;
@@ -132,7 +132,7 @@ async fn main() {
         .layer(OtelAxumLayer::default())
         .layer(middleware::from_fn_with_state(
             state.clone(),
-            errors::render_error,
+            www::errors::render_error::<HandlerError>,
         ))
         .layer(middleware::from_fn(
             async |request: Request, next: Next| -> Response {
