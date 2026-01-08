@@ -8,9 +8,11 @@
     fenix.url = "github:nix-community/fenix";
     fenix.inputs.nixpkgs.follows = "nixpkgs";
 
-    cargo2nix.url = "github:cargo2nix/cargo2nix/main";
+    rust-overlay.url = "github:oxalica/rust-overlay/stable";
+
+    cargo2nix.url = "github:jacobmichels/cargo2nix/release-0.12";
     cargo2nix.inputs.flake-utils.follows = "flake-utils";
-    cargo2nix.inputs.nixpkgs.follows = "nixpkgs";
+    cargo2nix.inputs.rust-overlay.follows = "rust-overlay";
 
     onehalf.url = "github:sonph/onehalf/master";
     onehalf.flake = false;
