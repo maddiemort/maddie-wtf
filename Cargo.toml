@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "maddie-wtf",
+    "www",
 ]
 resolver = "2"
 
@@ -12,6 +13,8 @@ license = "MIT OR Apache-2.0"
 repository = "https://github.com/maddiemort/maddie-wtf"
 
 [workspace.dependencies]
+www = { path = "./www" }
+
 axum = "0.7.4"
 axum-tracing-opentelemetry = "0.16.0"
 built = "0.7.2"

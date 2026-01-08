@@ -4,6 +4,7 @@ args @ {
   release ? true,
   rootFeatures ? [
     "maddie-wtf/default"
+    "www/default"
   ],
   rustPackages,
   buildRustPackages,
@@ -23,7 +24,7 @@ args @ {
   ignoreLockHash,
   cargoConfig ? {},
 }: let
-  nixifiedLockHash = "dcc72bdd92552d60fd1aea0d25fed84f47a78346baf30f07d5f5eda3e885cb0e";
+  nixifiedLockHash = "12d6dbcb0f27ede22c26820c6a88d1cb143af5ee9980dc8a7f5f74d40fb60c6b";
   workspaceSrc =
     if args.workspaceSrc == null
     then ./.
@@ -74,6 +75,7 @@ in
     cargo2nixVersion = "0.12.0";
     workspace = {
       maddie-wtf = rustPackages.unknown.maddie-wtf."0.1.4";
+      www = rustPackages.unknown.www."0.1.4";
     };
     "registry+https://github.com/rust-lang/crates.io-index".addr2line."0.24.2" = overridableMkRustCrate (profileName: rec {
       name = "addr2line";
@@ -2811,6 +2813,7 @@ in
         tracing_subscriber = (rustPackages."registry+https://github.com/rust-lang/crates.io-index".tracing-subscriber."0.3.19" {inherit profileName;}).out;
         url = (rustPackages."registry+https://github.com/rust-lang/crates.io-index".url."2.5.4" {inherit profileName;}).out;
         uuid = (rustPackages."registry+https://github.com/rust-lang/crates.io-index".uuid."1.16.0" {inherit profileName;}).out;
+        www = (rustPackages."unknown".www."0.1.4" {inherit profileName;}).out;
       };
       buildDependencies = {
         built = (buildRustPackages."registry+https://github.com/rust-lang/crates.io-index".built."0.7.7" {profileName = "__noProfile";}).out;
@@ -6612,6 +6615,19 @@ in
       src = fetchCratesIo {
         inherit name version;
         sha256 = "1e9df38ee2d2c3c5948ea468a8406ff0db0b29ae1ffde1bcf20ef305bcc95c51";
+      };
+    });
+
+    "unknown".www."0.1.4" = overridableMkRustCrate (profileName: rec {
+      name = "www";
+      version = "0.1.4";
+      registry = "unknown";
+      src = fetchCrateLocal workspaceSrc;
+      dependencies = {
+        cfg_if = (rustPackages."registry+https://github.com/rust-lang/crates.io-index".cfg-if."1.0.0" {inherit profileName;}).out;
+        tokio = (rustPackages."registry+https://github.com/rust-lang/crates.io-index".tokio."1.44.2" {inherit profileName;}).out;
+        tracing = (rustPackages."registry+https://github.com/rust-lang/crates.io-index".tracing."0.1.41" {inherit profileName;}).out;
+        tracing_subscriber = (rustPackages."registry+https://github.com/rust-lang/crates.io-index".tracing-subscriber."0.3.19" {inherit profileName;}).out;
       };
     });
 

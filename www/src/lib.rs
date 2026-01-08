@@ -1,12 +1,9 @@
 use cfg_if::cfg_if;
 use tokio::signal;
 use tracing::{info, instrument};
-use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
+use tracing_subscriber::{fmt, layer::SubscriberExt as _, util::SubscriberInitExt as _, EnvFilter};
 
 mod result_option_exts;
-
-pub mod build_info;
-pub mod metric;
 
 pub use result_option_exts::{OptionExt, ResultExt};
 

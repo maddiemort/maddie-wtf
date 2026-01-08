@@ -1,11 +1,11 @@
 use std::fmt;
 
-use maddie_wtf::OptionExt as _;
 use serde::{
     de::{self, Visitor},
     Deserialize, Deserializer,
 };
 use thiserror::Error;
+use www::OptionExt as _;
 
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct TagName(String);

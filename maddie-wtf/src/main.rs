@@ -13,7 +13,6 @@ use axum::{
 use axum_tracing_opentelemetry::middleware::OtelAxumLayer;
 use camino::Utf8PathBuf;
 use clap::Parser;
-use maddie_wtf::metric;
 use metrics_exporter_prometheus::PrometheusBuilder;
 use tokio::net::TcpListener;
 use tower_http::services::ServeDir;
@@ -23,8 +22,10 @@ use url::Url;
 
 use crate::state::Config;
 
+mod build_info;
 mod errors;
 mod handlers;
+mod metric;
 mod state;
 mod templates;
 
@@ -82,7 +83,7 @@ impl std::fmt::Display for Environment {
 #[tokio::main]
 async fn main() {
     dotenv::dotenv().ok();
-    maddie_wtf::init_tracing();
+    www::init_tracing();
 
     let args = Args::parse();
 
@@ -207,7 +208,7 @@ async fn main() {
         .with_state(state);
 
     match axum::serve(listener, app.into_make_service())
-        .with_graceful_shutdown(maddie_wtf::graceful_shutdown())
+        .with_graceful_shutdown(www::graceful_shutdown())
         .await
     {
         Ok(_) => {

@@ -10,6 +10,8 @@ repository.workspace = true
 dist = true
 
 [dependencies]
+www = { workspace = true }
+
 axum = { workspace = true }
 axum-tracing-opentelemetry = { workspace = true }
 camino = { workspace = true }

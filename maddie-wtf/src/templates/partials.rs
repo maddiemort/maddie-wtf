@@ -2,11 +2,13 @@ use std::{env, option_env};
 
 use camino::Utf8Path;
 use chrono::NaiveDate;
-use maddie_wtf::build_info;
 use maud::{html, Markup};
 use url::Url;
 
-use crate::state::{names::TagName, Theme};
+use crate::{
+    build_info,
+    state::{names::TagName, Theme},
+};
 
 pub async fn head(title: Option<&str>, theme: Theme) -> Markup {
     let theme_header = theme.theme_header();
