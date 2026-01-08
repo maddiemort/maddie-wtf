@@ -54,7 +54,8 @@ pub struct Args {
 #[tokio::main]
 async fn main() {
     dotenv::dotenv().ok();
-    www::observability::init_tracing(cfg!(debug_assertions));
+    www::observability::init_tracing(cfg!(debug_assertions))
+        .expect("failed to set global default subscriber");
 
     let args = Args::parse();
 
