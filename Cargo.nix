@@ -24,7 +24,7 @@ args @ {
   ignoreLockHash,
   cargoConfig ? {},
 }: let
-  nixifiedLockHash = "12d6dbcb0f27ede22c26820c6a88d1cb143af5ee9980dc8a7f5f74d40fb60c6b";
+  nixifiedLockHash = "99ea1f8d51ef541ac04a9d519717e7bacf4f021ce59dc413b73b41e45a09c792";
   workspaceSrc =
     if args.workspaceSrc == null
     then ./.
@@ -6625,6 +6625,7 @@ in
       src = fetchCrateLocal workspaceSrc;
       dependencies = {
         cfg_if = (rustPackages."registry+https://github.com/rust-lang/crates.io-index".cfg-if."1.0.0" {inherit profileName;}).out;
+        clap = (rustPackages."registry+https://github.com/rust-lang/crates.io-index".clap."4.5.37" {inherit profileName;}).out;
         tokio = (rustPackages."registry+https://github.com/rust-lang/crates.io-index".tokio."1.44.2" {inherit profileName;}).out;
         tracing = (rustPackages."registry+https://github.com/rust-lang/crates.io-index".tracing."0.1.41" {inherit profileName;}).out;
         tracing_subscriber = (rustPackages."registry+https://github.com/rust-lang/crates.io-index".tracing-subscriber."0.3.19" {inherit profileName;}).out;

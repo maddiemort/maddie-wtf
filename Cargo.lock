@@ -3426,6 +3426,7 @@ name = "www"
 version = "0.1.4"
 dependencies = [
  "cfg-if",
+ "clap",
  "tokio",
  "tracing",
  "tracing-subscriber",

@@ -1,7 +1,4 @@
-use std::{
-    net::{IpAddr, Ipv4Addr, SocketAddr},
-    str::FromStr,
-};
+use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 
 use axum::{
     extract::Request,
@@ -19,6 +16,7 @@ use tower_http::services::ServeDir;
 use tower_livereload::LiveReloadLayer;
 use tracing::{error, error_span, field, info, Instrument, Span};
 use url::Url;
+use www::config::Environment;
 
 use crate::state::Config;
 
@@ -51,33 +49,6 @@ pub struct Args {
 
     #[arg(long, env = "METRICS_PORT")]
     metrics_port: Option<u16>,
-}
-
-#[derive(Copy, Clone, Debug)]
-enum Environment {
-    Development,
-    Production,
-}
-
-impl FromStr for Environment {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s.to_lowercase().as_str() {
-            "dev" | "development" => Ok(Environment::Development),
-            "prod" | "production" => Ok(Environment::Production),
-            _ => Err(format!("`{}` is not a valid environment name", s)),
-        }
-    }
-}
-
-impl std::fmt::Display for Environment {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Environment::Development => write!(f, "development"),
-            Environment::Production => write!(f, "production"),
-        }
-    }
 }
 
 #[tokio::main]

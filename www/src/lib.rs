@@ -5,6 +5,8 @@ use tracing_subscriber::{fmt, layer::SubscriberExt as _, util::SubscriberInitExt
 
 mod result_option_exts;
 
+pub mod config;
+
 pub use result_option_exts::{OptionExt, ResultExt};
 
 pub fn init_tracing() {
