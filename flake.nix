@@ -39,7 +39,7 @@
               stableFor = target:
                 target.fromToolchainFile {
                   file = ./rust-toolchain.toml;
-                  sha256 = "sha256-X/4ZBHO3iW0fOenQ3foEvscgAPJYl2abspaBThDOukI=";
+                  sha256 = "sha256-sqSWJDUxc+zaz1nBWMAJKTAGBuGWP25GCftIOlCEAtA=";
                 };
 
               rustfmt = final.fenix.latest.rustfmt;
@@ -178,7 +178,7 @@
           rustToolchain =
             pkgs.rust-toolchain
             // {
-              version = "1.86.0";
+              version = "1.92.0";
             };
 
           packageOverrides = pkgs:
@@ -192,8 +192,6 @@
               })
             ];
         };
-
-        inherit (pkgs.lib) optionals;
       in rec
       {
         packages = rec {
