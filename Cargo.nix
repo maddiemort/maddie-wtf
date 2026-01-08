@@ -24,7 +24,7 @@ args @ {
   ignoreLockHash,
   cargoConfig ? {},
 }: let
-  nixifiedLockHash = "99ea1f8d51ef541ac04a9d519717e7bacf4f021ce59dc413b73b41e45a09c792";
+  nixifiedLockHash = "a0acbb4c8c6e33ccd204e201b85f335ed665becc2d72e5bce27bbc3185c03435";
   workspaceSrc =
     if args.workspaceSrc == null
     then ./.
@@ -2797,7 +2797,6 @@ in
         lazy_static = (rustPackages."registry+https://github.com/rust-lang/crates.io-index".lazy_static."1.5.0" {inherit profileName;}).out;
         maud = (rustPackages."registry+https://github.com/rust-lang/crates.io-index".maud."0.26.0" {inherit profileName;}).out;
         metrics = (rustPackages."registry+https://github.com/rust-lang/crates.io-index".metrics."0.24.2" {inherit profileName;}).out;
-        metrics_exporter_prometheus = (rustPackages."registry+https://github.com/rust-lang/crates.io-index".metrics-exporter-prometheus."0.17.2" {inherit profileName;}).out;
         notify = (rustPackages."registry+https://github.com/rust-lang/crates.io-index".notify."6.1.1" {inherit profileName;}).out;
         notify_debouncer_mini = (rustPackages."registry+https://github.com/rust-lang/crates.io-index".notify-debouncer-mini."0.4.1" {inherit profileName;}).out;
         serde = (rustPackages."registry+https://github.com/rust-lang/crates.io-index".serde."1.0.219" {inherit profileName;}).out;
@@ -6626,6 +6625,7 @@ in
       dependencies = {
         cfg_if = (rustPackages."registry+https://github.com/rust-lang/crates.io-index".cfg-if."1.0.0" {inherit profileName;}).out;
         clap = (rustPackages."registry+https://github.com/rust-lang/crates.io-index".clap."4.5.37" {inherit profileName;}).out;
+        metrics_exporter_prometheus = (rustPackages."registry+https://github.com/rust-lang/crates.io-index".metrics-exporter-prometheus."0.17.2" {inherit profileName;}).out;
         tokio = (rustPackages."registry+https://github.com/rust-lang/crates.io-index".tokio."1.44.2" {inherit profileName;}).out;
         tracing = (rustPackages."registry+https://github.com/rust-lang/crates.io-index".tracing."0.1.41" {inherit profileName;}).out;
         tracing_subscriber = (rustPackages."registry+https://github.com/rust-lang/crates.io-index".tracing-subscriber."0.3.19" {inherit profileName;}).out;

@@ -26,7 +26,6 @@ init-tracing-opentelemetry = { workspace = true }
 lazy_static = { workspace = true }
 maud = { workspace = true, features = ["axum"] }
 metrics = { workspace = true }
-metrics-exporter-prometheus = { workspace = true }
 notify = { workspace = true }
 notify-debouncer-mini = { workspace = true }
 serde = { workspace = true, features = ["derive"] }

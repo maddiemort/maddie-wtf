@@ -1481,7 +1481,6 @@ dependencies = [
  "lazy_static",
  "maud",
  "metrics",
- "metrics-exporter-prometheus",
  "notify",
  "notify-debouncer-mini",
  "serde",
@@ -3427,6 +3426,7 @@ version = "0.1.4"
 dependencies = [
  "cfg-if",
  "clap",
+ "metrics-exporter-prometheus",
  "tokio",
  "tracing",
  "tracing-subscriber",

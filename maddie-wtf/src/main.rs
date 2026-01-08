@@ -1,4 +1,4 @@
-use std::net::{IpAddr, Ipv4Addr, SocketAddr};
+use std::net::SocketAddr;
 
 use axum::{
     extract::Request,
@@ -10,7 +10,6 @@ use axum::{
 use axum_tracing_opentelemetry::middleware::OtelAxumLayer;
 use camino::Utf8PathBuf;
 use clap::Parser;
-use metrics_exporter_prometheus::PrometheusBuilder;
 use tokio::net::TcpListener;
 use tower_http::services::ServeDir;
 use tower_livereload::LiveReloadLayer;
@@ -73,15 +72,14 @@ async fn main() {
     };
 
     if let Some(port) = args.metrics_port {
-        let environment = args.environment.to_string();
-
-        PrometheusBuilder::new()
-            .with_http_listener(SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), port))
-            .add_global_label("environment", &environment)
-            .install()
+        www::observability::init_metrics(port, args.environment)
             .expect("should be able to install Prometheus metrics recorder and exporter");
 
-        info!(%port, %environment, "installed Prometheus metrics recorder and exporter");
+        info!(
+            %port,
+            environment = %args.environment,
+            "installed Prometheus metrics recorder and exporter",
+        );
     }
 
     metrics::counter!(*metric::REQUESTS_RECEIVED).absolute(0);
