@@ -225,23 +225,19 @@
         };
 
         devShells.default = pkgs.mkShell {
-          packages = with pkgs;
-            [
-              rust-toolchain
+          packages = with pkgs; [
+            rust-toolchain
 
-              aha # For converting ANSI colored text to HTML
-              cargo-dist
-              cargo-watch
-              cargo2nix
-              convco
-              lld
-              nixpkgs-fmt
+            aha # For converting ANSI colored text to HTML
+            cargo-dist
+            cargo-watch
+            cargo2nix
+            convco
+            lld
+            nixpkgs-fmt
 
-              libiconv
-            ]
-            ++ (optionals pkgs.stdenv.isDarwin (with pkgs.darwin.apple_sdk.frameworks; [
-              CoreServices
-            ]));
+            libiconv
+          ];
 
           THEMES_PATH = "${onehalf}/sublimetext";
           STATIC_PATH = packages.maddie-wtf-static;
