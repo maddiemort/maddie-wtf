@@ -203,7 +203,7 @@
           maddie-wtf-static = pkgs.stdenv.mkDerivation {
             name = "maddie-wtf-static";
             srcs = [
-              ./static
+              ./maddie-wtf/static
               "${pkgs.iosevka}/share/fonts/WOFF2"
             ];
             sourceRoot = ".";

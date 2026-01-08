@@ -1,0 +1,48 @@
+[package]
+name = "maddie-wtf"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[package.metadata.dist]
+dist = true
+
+[dependencies]
+axum = { workspace = true }
+axum-tracing-opentelemetry = { workspace = true }
+camino = { workspace = true }
+cfg-if = { workspace = true }
+chrono = { workspace = true, features = ["serde"] }
+clap = { workspace = true, features = ["env"] }
+comrak = { workspace = true }
+dotenv = { workspace = true }
+either = { workspace = true }
+ignore = { workspace = true }
+init-tracing-opentelemetry = { workspace = true }
+lazy_static = { workspace = true }
+maud = { workspace = true, features = ["axum"] }
+metrics = { workspace = true }
+metrics-exporter-prometheus = { workspace = true }
+notify = { workspace = true }
+notify-debouncer-mini = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+syntect = { workspace = true }
+tap = { workspace = true }
+thiserror = { workspace = true }
+tokio = { workspace = true, features = ["full"] }
+toml = { workspace = true }
+tower = { workspace = true, features = ["util"] }
+tower-http = { workspace = true, features = ["fs"] }
+tower-livereload = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true, features = ["env-filter"] }
+url = { workspace = true, features = ["serde"] }
+uuid = { workspace = true, features = ["v4"] }
+
+[build-dependencies]
+built = { workspace = true, features = ["git2"] }
+grass = { workspace = true }
+grass_compiler = { workspace = true }
+thiserror = { workspace = true }
