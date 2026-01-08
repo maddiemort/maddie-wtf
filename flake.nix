@@ -230,6 +230,7 @@
 
             aha # For converting ANSI colored text to HTML
             cargo-dist
+            cargo-machete
             cargo-watch
             cargo2nix
             convco

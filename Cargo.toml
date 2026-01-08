@@ -28,7 +28,6 @@ either = "1.11.0"
 grass = "0.13.2"
 grass_compiler = "0.13.2"
 ignore = "0.4.22"
-init-tracing-opentelemetry = "0.16.0"
 lazy_static = "1.4.0"
 maud = "0.26.0"
 metrics = "0.24.2"
@@ -41,13 +40,14 @@ tap = "1.0.1"
 thiserror = "1.0.56"
 tokio = "1.36.0"
 toml = "0.8.10"
-tower = "0.4.13"
 tower-http = "0.5.1"
 tower-livereload = "0.9.2"
 tracing = "0.1.40"
 tracing-subscriber = "0.3.18"
 url = "2.5.4"
-uuid = "1.7.0"
+
+[workspace.lints.rust]
+unused-crate-dependencies = "warn"
 
 # The profile that 'dist' will build with
 [profile.dist]
