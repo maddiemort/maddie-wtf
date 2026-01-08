@@ -54,7 +54,7 @@ pub struct Args {
 #[tokio::main]
 async fn main() {
     dotenv::dotenv().ok();
-    www::init_tracing();
+    www::observability::init_tracing(cfg!(debug_assertions));
 
     let args = Args::parse();
 
@@ -179,7 +179,7 @@ async fn main() {
         .with_state(state);
 
     match axum::serve(listener, app.into_make_service())
-        .with_graceful_shutdown(www::graceful_shutdown())
+        .with_graceful_shutdown(www::lifecycle::graceful_shutdown())
         .await
     {
         Ok(_) => {
