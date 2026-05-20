@@ -24,7 +24,7 @@ args @ {
   ignoreLockHash,
   cargoConfig ? {},
 }: let
-  nixifiedLockHash = "0c95cc0afb71ec26b5de0144f4a3ed7d1ec1b78775cc55b14248890595bb504a";
+  nixifiedLockHash = "f44765aabb1ee95fec52811d115ada843e6f13fe726f9d4731c78c1910ba10f8";
   workspaceSrc =
     if args.workspaceSrc == null
     then ./.
@@ -74,8 +74,8 @@ in
   in {
     cargo2nixVersion = "0.12.0";
     workspace = {
-      maddie-wtf = rustPackages.unknown.maddie-wtf."0.1.4";
-      www = rustPackages.unknown.www."0.1.4";
+      maddie-wtf = rustPackages.unknown.maddie-wtf."0.2.0";
+      www = rustPackages.unknown.www."0.2.0";
     };
     "registry+https://github.com/rust-lang/crates.io-index".adler2."2.0.1" = overridableMkRustCrate (profileName: rec {
       name = "adler2";
@@ -2434,9 +2434,9 @@ in
       ];
     });
 
-    "unknown".maddie-wtf."0.1.4" = overridableMkRustCrate (profileName: rec {
+    "unknown".maddie-wtf."0.2.0" = overridableMkRustCrate (profileName: rec {
       name = "maddie-wtf";
-      version = "0.1.4";
+      version = "0.2.0";
       registry = "unknown";
       src = fetchCrateLocal workspaceSrc;
       dependencies = {
@@ -2464,7 +2464,7 @@ in
         tower_livereload = (rustPackages."registry+https://github.com/rust-lang/crates.io-index".tower-livereload."0.9.6" {inherit profileName;}).out;
         tracing = (rustPackages."registry+https://github.com/rust-lang/crates.io-index".tracing."0.1.44" {inherit profileName;}).out;
         url = (rustPackages."registry+https://github.com/rust-lang/crates.io-index".url."2.5.8" {inherit profileName;}).out;
-        www = (rustPackages."unknown".www."0.1.4" {inherit profileName;}).out;
+        www = (rustPackages."unknown".www."0.2.0" {inherit profileName;}).out;
       };
       buildDependencies = {
         built = (buildRustPackages."registry+https://github.com/rust-lang/crates.io-index".built."0.7.7" {profileName = "__noProfile";}).out;
@@ -5981,9 +5981,9 @@ in
       };
     });
 
-    "unknown".www."0.1.4" = overridableMkRustCrate (profileName: rec {
+    "unknown".www."0.2.0" = overridableMkRustCrate (profileName: rec {
       name = "www";
-      version = "0.1.4";
+      version = "0.2.0";
       registry = "unknown";
       src = fetchCrateLocal workspaceSrc;
       dependencies = {

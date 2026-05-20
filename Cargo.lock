@@ -1292,7 +1292,7 @@ checksum = "5e5032e24019045c762d3c0f28f5b6b8bbf38563a65908389bf7978758920897"
 
 [[package]]
 name = "maddie-wtf"
-version = "0.1.4"
+version = "0.2.0"
 dependencies = [
  "axum",
  "axum-tracing-opentelemetry",
@@ -3113,7 +3113,7 @@ checksum = "1ffae5123b2d3fc086436f8834ae3ab053a283cfac8fe0a0b8eaae044768a4c4"
 
 [[package]]
 name = "www"
-version = "0.1.4"
+version = "0.2.0"
 dependencies = [
  "cfg-if",
  "clap",

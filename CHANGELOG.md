@@ -1,8 +1,21 @@
 # Changelog
 
-## [v0.1.4](https://github.com/maddiemort/maddie-wtf/compare/v0.1.3...667665a7c9d6d4cb79677ca59dadeda8eb6614ca) (2025-07-27)
+## [v0.2.0](https://github.com/maddiemort/maddie-wtf/compare/v0.1.4...6591bc3c168752e0884fb921eac4f56180f78071) (2026-05-20)
 
 ### Features
+
+* **www:** prometheus metrics recorder/exporter init function
+([322360b](https://github.com/maddiemort/maddie-wtf/commit/322360b56ba96b4479b14e5b13ca5b127852482e))
+* **www:** allow dependents to handle tracing subscriber init errors
+([ceb887c](https://github.com/maddiemort/maddie-wtf/commit/ceb887ce7d89308a01d080aa7d76ce8df2d1bcd8))
+* **www:** general-purpose `Environment` enum
+([c2bd445](https://github.com/maddiemort/maddie-wtf/commit/c2bd445700654a02944fd16079ac3f65e2d8e78c))
+* **www:** independent `www` crate for generally useful abstractions
+([29e874d](https://github.com/maddiemort/maddie-wtf/commit/29e874dabf1f430bf987a8a7ac7881581fdd1d0f))
+
+### [v0.1.4](https://github.com/maddiemort/maddie-wtf/compare/v0.1.3...v0.1.4) (2025-07-27)
+
+#### Features
 
 * make headers into non-highlighted links to their sections
 ([667665a](https://github.com/maddiemort/maddie-wtf/commit/667665a7c9d6d4cb79677ca59dadeda8eb6614ca))
@@ -68,7 +81,7 @@ properly
 * turn off text justification
 ([f6019b2](https://github.com/maddiemort/maddie-wtf/commit/f6019b29caae4081afa1b8f22bb79f01b96aa937))
 
-### Fixes
+#### Fixes
 
 * missing space in footer
 ([a8473c1](https://github.com/maddiemort/maddie-wtf/commit/a8473c1bfaec00c2bfefbacecdf6d09c5a6e54eb))
